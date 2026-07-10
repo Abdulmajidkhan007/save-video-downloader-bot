@@ -7,6 +7,7 @@ const urlcache = require('../services/urlcache');
 const acrcloud = require('../services/acrcloud');
 const media = require('../services/media');
 const notify = require('../services/notify');
+const ratelimit = require('../services/ratelimit');
 const { config, acrEnabled } = require('../config');
 const { extractUrl, detectPlatform, isYouTube } = require('../utils/platform');
 const {
@@ -117,7 +118,7 @@ async function performDownload(
     }
 
     afterDownload(platform.name);
-    storage.incrementUserDownloads(userId);
+    storage.incrementUserDownloads(userId, platform.name);
 
     if (statusMsg) {
       try {
@@ -174,7 +175,7 @@ async function performImageDownload(bot, { origMsg, chatId, userId, url, platfor
     await sendImages(bot, chatId, origMsg, res.files);
 
     afterDownload(platform.name);
-    storage.incrementUserDownloads(userId);
+    storage.incrementUserDownloads(userId, platform.name);
 
     if (statusMsg) {
       try {
@@ -247,7 +248,7 @@ async function performAudio(bot, { chatId, userId, url, meta, replyToMessageId, 
 
     storage.recordMp3Download();
     afterDownload('audio');
-    storage.incrementUserDownloads(userId);
+    storage.incrementUserDownloads(userId, 'audio');
   } catch (err) {
     console.error('[audio] xato:', err.stderr || err.message);
     if (editStatus) {
@@ -331,13 +332,31 @@ async function handleUrlMessage(bot, msg, { isGroup = false } = {}) {
     return true;
   }
 
-  // Majburiy obuna — faqat shaxsiy chatda
-  if (!isGroup) {
-    const sub = await checkSubscription(bot, userId);
-    if (!sub.ok) {
-      await sendSubscriptionPrompt(bot, chatId, sub.missing);
-      return true;
-    }
+  // Guruhda ko'rilgan foydalanuvchini 'group' manbasi bilan qayd qilamiz.
+  if (isGroup) storage.upsertUser(msg.from, 'group');
+
+  // Anti-flood: bir xil URL 30s ichida qayta kelsa — jimgina o'tkazamiz.
+  if (ratelimit.isDuplicate(msg.from, url)) return true;
+
+  // Rate limiting: daqiqasiga max 5 yuklash so'rovi.
+  if (!ratelimit.checkRate(msg.from)) {
+    await bot.sendMessage(
+      chatId,
+      `⏳ Sekinroq — 1 daqiqada maksimal ${ratelimit.MAX_PER_WINDOW} ta yuklash.`,
+      replyOpts(msg)
+    );
+    return true;
+  }
+
+  // Majburiy obuna — shaxsiy chatda ham, guruhda ham tekshiriladi.
+  const sub = await checkSubscription(bot, userId);
+  if (!sub.ok) {
+    await sendSubscriptionPrompt(bot, chatId, sub.missing, {
+      userId,
+      short: isGroup,
+      replyToMessageId: isGroup ? msg.message_id : undefined,
+    });
+    return true;
   }
 
   // Pinterest — to'g'ridan-to'g'ri rasm oqimi

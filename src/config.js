@@ -68,6 +68,7 @@ const config = {
     stats: path.join(DATA_DIR, 'stats.json'),
     groups: path.join(DATA_DIR, 'groups.json'),
     urlcache: path.join(DATA_DIR, 'urlcache.json'),
+    adminLog: path.join(DATA_DIR, 'admin_log.json'),
   },
 };
 

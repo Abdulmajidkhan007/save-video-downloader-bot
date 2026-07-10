@@ -34,13 +34,20 @@ async function checkSubscription(bot, userId) {
 }
 
 // Obuna bo'lmagan foydalanuvchiga kanallar ro'yxatini yuboradi.
-async function sendSubscriptionPrompt(bot, chatId, channels) {
-  const text =
-    '📢 Botdan foydalanish uchun quyidagi kanal(lar)ga obuna bo\'ling:\n\n' +
-    'Obuna bo\'lgach «✅ Obunani tekshirish» tugmasini bosing.';
-  await bot.sendMessage(chatId, text, {
-    reply_markup: subscriptionKeyboard(channels),
-  });
+// opts: { userId, replyToMessageId, short } — guruh uchun qisqa reply variant.
+async function sendSubscriptionPrompt(bot, chatId, channels, opts = {}) {
+  const text = opts.short
+    ? '📢 Avval kanalimizga obuna bo\'ling, so\'ng «✅ Tekshirish» tugmasini bosing.'
+    : '📢 Botdan foydalanish uchun quyidagi kanal(lar)ga obuna bo\'ling:\n\n' +
+      'Obuna bo\'lgach «✅ Obunani tekshirish» tugmasini bosing.';
+  const sendOpts = {
+    reply_markup: subscriptionKeyboard(channels, opts.userId),
+  };
+  if (opts.replyToMessageId) {
+    sendOpts.reply_to_message_id = opts.replyToMessageId;
+    sendOpts.allow_sending_without_reply = true;
+  }
+  await bot.sendMessage(chatId, text, sendOpts);
 }
 
 module.exports = { checkSubscription, sendSubscriptionPrompt };

@@ -172,8 +172,8 @@ bot.on('message', (msg) => {
         return;
       }
 
-      // SHAXSIY CHAT: foydalanuvchini ro'yxatga qo'shamiz
-      const user = storage.upsertUser(msg.from);
+      // SHAXSIY CHAT: foydalanuvchini 'private' manbasi bilan qo'shamiz
+      const user = storage.upsertUser(msg.from, 'private');
       if (user && user.isNew) {
         notify.notifyAdmins(
           '🆕 <b>Yangi foydalanuvchi</b>\n' +
@@ -208,30 +208,69 @@ bot.on('message', (msg) => {
 
 // ---- Callback query'lar --------------------------------------------------
 
+// callback_data ni kutilgan format bo'yicha tekshiramiz. Noto'g'ri bo'lsa null.
+// Bu — callback orqali aylanib o'tishga (spoofing) qarshi birinchi qatlam.
+function validateCallback(data) {
+  if (!data || typeof data !== 'string' || data.length > 64) return null;
+
+  if (data.startsWith('admin|')) {
+    const parts = data.split('|');
+    if (parts.length < 2 || !parts[1]) return null;
+    return { kind: 'admin' };
+  }
+  if (data.startsWith('yt|')) {
+    const parts = data.split('|');
+    // yt|<action>|<token> — action ma'lum, token hex
+    if (parts.length !== 3) return null;
+    if (!['360', '720', 'mp3'].includes(parts[1])) return null;
+    if (!/^[a-f0-9]{8,}$/i.test(parts[2])) return null;
+    return { kind: 'yt' };
+  }
+  if (data.startsWith('mp3:') || data.startsWith('song:')) {
+    const parts = data.split(':');
+    if (parts.length !== 2 || !/^[a-f0-9]{6,16}$/i.test(parts[1])) return null;
+    return { kind: parts[0] };
+  }
+  if (data === 'check_sub' || data.startsWith('check_sub:')) {
+    const parts = data.split(':');
+    if (parts.length === 1) return { kind: 'check_sub', userId: null };
+    if (parts.length === 2 && /^\d{1,20}$/.test(parts[1])) {
+      return { kind: 'check_sub', userId: parts[1] };
+    }
+    return null;
+  }
+  return null;
+}
+
 bot.on('callback_query', (query) => {
   const data = query.data || '';
+  const v = validateCallback(data);
+  // Noto'g'ri formatdagi callback — jimgina ignore qilamiz.
+  if (!v) {
+    bot.answerCallbackQuery(query.id).catch(() => {});
+    return;
+  }
   wrapCallback(async () => {
-    if (data.startsWith('admin|')) {
-      await admin.handleAdminCallback(bot, query);
-      return;
+    switch (v.kind) {
+      case 'admin':
+        // ADMIN_IDS tekshiruvi handleAdminCallback ichida (message emas, callback qatlamida ham)
+        await admin.handleAdminCallback(bot, query);
+        return;
+      case 'yt':
+        await download.handleYouTubeCallback(bot, query);
+        return;
+      case 'mp3':
+        await download.handleMp3Callback(bot, query);
+        return;
+      case 'song':
+        await download.handleSongCallback(bot, query);
+        return;
+      case 'check_sub':
+        await handleCheckSubscription(bot, query, v.userId);
+        return;
+      default:
+        await bot.answerCallbackQuery(query.id).catch(() => {});
     }
-    if (data.startsWith('yt|')) {
-      await download.handleYouTubeCallback(bot, query);
-      return;
-    }
-    if (data.startsWith('mp3:')) {
-      await download.handleMp3Callback(bot, query);
-      return;
-    }
-    if (data.startsWith('song:')) {
-      await download.handleSongCallback(bot, query);
-      return;
-    }
-    if (data === 'check_sub') {
-      await handleCheckSubscription(bot, query);
-      return;
-    }
-    await bot.answerCallbackQuery(query.id).catch(() => {});
   }, query);
 });
 
@@ -273,10 +312,21 @@ bot.on('my_chat_member', (upd) => {
   }, null, true);
 });
 
-// «✅ Obunani tekshirish» tugmasi
-async function handleCheckSubscription(bot, query) {
+// «✅ Obunani tekshirish» tugmasi. targetUserId berilgan bo'lsa (guruhdagi
+// per-user tugma) — faqat o'sha foydalanuvchi bosa oladi.
+async function handleCheckSubscription(bot, query, targetUserId) {
   const userId = query.from.id;
   const chatId = query.message.chat.id;
+
+  // Tugma boshqa foydalanuvchi uchun bo'lsa — ruxsat bermaymiz.
+  if (targetUserId && String(targetUserId) !== String(userId)) {
+    await bot.answerCallbackQuery(query.id, {
+      text: '⛔️ Bu tugma siz uchun emas.',
+      show_alert: true,
+    });
+    return;
+  }
+
   const sub = await checkSubscription(bot, userId);
   if (sub.ok) {
     await bot.answerCallbackQuery(query.id, {
@@ -293,7 +343,11 @@ async function handleCheckSubscription(bot, query) {
       text: '⛔️ Siz hali barcha kanallarga obuna bo\'lmadingiz.',
       show_alert: true,
     });
-    await sendSubscriptionPrompt(bot, chatId, sub.missing);
+    await sendSubscriptionPrompt(bot, chatId, sub.missing, {
+      userId,
+      short: isGroupChat(query.message),
+      replyToMessageId: isGroupChat(query.message) ? query.message.message_id : undefined,
+    });
   }
 }
 
