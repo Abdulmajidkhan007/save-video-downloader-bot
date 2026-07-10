@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs", "python311", "ffmpeg"]
+
+[phases.install]
+cmds = [
+  "npm install",
+  "pip install yt-dlp --break-system-packages || pip install yt-dlp"
+]
+
+[start]
+cmd = "npm start"
