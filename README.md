@@ -61,9 +61,10 @@ npm install && cp -n .env.example .env && node src/bot.js
    - `ADMIN_IDS` = `123456789` (o'z Telegram ID(lar)ingiz)
    - `DATA_DIR` = `/app/data`
    - (opsional) `YTDLP_COOKIES` = `/app/data/cookies.txt`
-5. `nixpacks.toml` avtomatik ishlaydi — `nodejs`, `ffmpeg`, `curl` o'rnatadi va
-   yt-dlp'ning **standalone binary**'sini `./bin/yt-dlp` ga yuklab oladi
-   (python kerak emas). Bot ishga tushganda `yt-dlp --version` log qilinadi.
+5. `nixpacks.toml` `nodejs`, `ffmpeg`, `curl` ni o'rnatadi (python kerak emas).
+   `npm install` esa `postinstall` skripti orqali yt-dlp'ning **standalone
+   binary**'sini (`yt-dlp_linux`) `bin/yt-dlp` ga yuklab oladi. Bot ishga
+   tushganda diagnostika + `yt-dlp --version` log qilinadi.
 6. Deploy tugagach bot polling rejimida ishga tushadi.
 
 > **Agar binary yuklab bo'lmasa** (curl xatosi): fallback sifatida
