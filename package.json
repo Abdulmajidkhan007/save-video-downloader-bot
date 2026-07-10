@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/bot.js",
     "dev": "node src/bot.js",
-    "postinstall": "mkdir -p bin && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o bin/yt-dlp && chmod +x bin/yt-dlp"
+    "postinstall": "mkdir -p bin && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o bin/yt-dlp && chmod +x bin/yt-dlp && curl -L https://github.com/mikf/gallery-dl/releases/latest/download/gallery-dl.bin -o bin/gallery-dl && chmod +x bin/gallery-dl"
   },
   "engines": {
     "node": ">=18"

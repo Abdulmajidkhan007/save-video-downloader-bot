@@ -38,8 +38,11 @@ function readJson(filePath, fallback) {
 const DEFAULTS = {
   users: {},
   channels: [], // [{ id, title, username, addedAt }]
+  groups: {}, // { "chatId": { title, addedBy, addedByName, membersCount, addedAt } }
   stats: {
     totalDownloads: 0,
+    mp3Downloads: 0,
+    musicSearches: 0,
     byPlatform: {},
     daily: {}, // { "2026-07-10": 12 }
   },
@@ -54,6 +57,9 @@ function init() {
   }
   if (!fs.existsSync(config.FILES.channels)) {
     writeJsonAtomic(config.FILES.channels, DEFAULTS.channels);
+  }
+  if (!fs.existsSync(config.FILES.groups)) {
+    writeJsonAtomic(config.FILES.groups, DEFAULTS.groups);
   }
   if (!fs.existsSync(config.FILES.stats)) {
     writeJsonAtomic(config.FILES.stats, DEFAULTS.stats);
@@ -96,7 +102,8 @@ function upsertUser(from) {
     };
   }
   saveUsers(users);
-  return users[id];
+  // isNew — yangi foydalanuvchi ekanini bildiradi (adminlarga xabar uchun).
+  return Object.assign({}, users[id], { isNew: !existing });
 }
 
 // Foydalanuvchining yuklashlar sonini oshiradi.
@@ -184,6 +191,8 @@ function removeChannel(idOrUsername) {
 function getStats() {
   return readJson(config.FILES.stats, {
     totalDownloads: 0,
+    mp3Downloads: 0,
+    musicSearches: 0,
     byPlatform: {},
     daily: {},
   });
@@ -206,6 +215,62 @@ function recordDownload(platform) {
   stats.daily[today] = (stats.daily[today] || 0) + 1;
 
   saveStats(stats);
+  return stats.totalDownloads;
+}
+
+// MP3 yuklashlar hisoblagichi.
+function recordMp3Download() {
+  const stats = getStats();
+  stats.mp3Downloads = (stats.mp3Downloads || 0) + 1;
+  saveStats(stats);
+}
+
+// Musiqa qidiruvlar hisoblagichi.
+function recordMusicSearch() {
+  const stats = getStats();
+  stats.musicSearches = (stats.musicSearches || 0) + 1;
+  saveStats(stats);
+}
+
+// ---- Groups --------------------------------------------------------------
+
+function getGroups() {
+  return readJson(config.FILES.groups, {});
+}
+
+function saveGroups(groups) {
+  writeJsonAtomic(config.FILES.groups, groups);
+}
+
+function addGroup(chat, addedBy, membersCount) {
+  const groups = getGroups();
+  const id = String(chat.id);
+  const prev = groups[id];
+  groups[id] = {
+    title: chat.title || (prev && prev.title) || '',
+    addedBy: addedBy ? String(addedBy.id) : (prev && prev.addedBy) || '',
+    addedByName: addedBy
+      ? addedBy.first_name || addedBy.username || ''
+      : (prev && prev.addedByName) || '',
+    membersCount: membersCount || (prev && prev.membersCount) || 0,
+    addedAt: prev ? prev.addedAt : new Date().toISOString(),
+  };
+  saveGroups(groups);
+}
+
+function removeGroup(chatId) {
+  const groups = getGroups();
+  const id = String(chatId);
+  if (groups[id]) {
+    delete groups[id];
+    saveGroups(groups);
+    return true;
+  }
+  return false;
+}
+
+function getGroupCount() {
+  return Object.keys(getGroups()).length;
 }
 
 module.exports = {
@@ -223,7 +288,14 @@ module.exports = {
   getChannels,
   addChannel,
   removeChannel,
+  // groups
+  getGroups,
+  addGroup,
+  removeGroup,
+  getGroupCount,
   // stats
   getStats,
   recordDownload,
+  recordMp3Download,
+  recordMusicSearch,
 };

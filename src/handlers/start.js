@@ -2,6 +2,12 @@
 
 const storage = require('../services/storage');
 const { PLATFORMS } = require('../utils/platform');
+const { addToGroupKeyboard } = require('../utils/keyboard');
+
+let BOT_USERNAME = '';
+function setBotUsername(username) {
+  BOT_USERNAME = username || '';
+}
 
 // /start — salomlashish + foydalanuvchini ro'yxatga qo'shish.
 async function handleStart(bot, msg) {
@@ -12,9 +18,12 @@ async function handleStart(bot, msg) {
     '🎬 Men video yuklovchi botman. Menga quyidagi platformalardan havola yuboring — ' +
     'videoni yuklab beraman:\n\n' +
     '• Instagram\n• TikTok\n• YouTube (video + MP3)\n• Facebook\n' +
-    '• Twitter/X\n• Pinterest\n• Likee\n\n' +
-    '📎 Havolani shu yerga tashlang!';
-  await bot.sendMessage(msg.chat.id, text);
+    '• Twitter/X\n• Pinterest (rasm)\n• Likee\n\n' +
+    '🎵 Qo\'shiq nomini yozsangiz — topib beraman.\n' +
+    '🎧 Ovozli xabar yuborsangiz — musiqani aniqlayman.\n\n' +
+    '📎 Havolani yoki qo\'shiq nomini shu yerga tashlang!';
+  const keyboard = addToGroupKeyboard(BOT_USERNAME);
+  await bot.sendMessage(msg.chat.id, text, keyboard ? { reply_markup: keyboard } : {});
 }
 
 // /help — qo'llab-quvvatlanadigan platformalar.
@@ -26,7 +35,13 @@ async function handleHelp(bot, msg) {
     'Menga video havolasini yuboring, men uni yuklab beraman.\n\n' +
     '<b>Qo\'llab-quvvatlanadigan platformalar:</b>\n' +
     list +
-    '\n\n<b>Buyruqlar:</b>\n' +
+    '\n\n<b>Qanday ishlataman?</b>\n' +
+    '🔗 Havola yuboring — video/rasm yuklab beraman\n' +
+    '🎵 Har video ostidagi «Audio (MP3)» tugmasi bilan audio oling\n' +
+    '🔎 Qo\'shiq nomini yozing — topib beraman\n' +
+    '🎧 Ovozli xabar yuboring — musiqani aniqlayman (Shazam kabi)\n' +
+    '➕ Meni guruhga ham qo\'shishingiz mumkin\n\n' +
+    '<b>Buyruqlar:</b>\n' +
     '/start — botni ishga tushirish\n' +
     '/stats — shaxsiy statistikangiz\n' +
     '/help — ushbu yordam\n\n' +
@@ -47,4 +62,4 @@ async function handleUserStats(bot, msg) {
   await bot.sendMessage(msg.chat.id, text, { parse_mode: 'HTML' });
 }
 
-module.exports = { handleStart, handleHelp, handleUserStats };
+module.exports = { handleStart, handleHelp, handleUserStats, setBotUsername };

@@ -42,6 +42,7 @@ function adminMenuKeyboard() {
         { text: '📣 Kanallar', callback_data: 'admin|channels' },
         { text: '👥 Foydalanuvchilar', callback_data: 'admin|users' },
       ],
+      [{ text: '👥 Guruhlar', callback_data: 'admin|groups' }],
     ],
   };
 }
@@ -79,6 +80,50 @@ function backToMenuKeyboard() {
   };
 }
 
+// Yuborilgan video ostidagi "🎵 Audio (MP3)" tugmasi.
+// id — urlcache dagi qisqa identifikator.
+function audioButtonKeyboard(id) {
+  return {
+    inline_keyboard: [[{ text: '🎵 Audio (MP3)', callback_data: `mp3:${id}` }]],
+  };
+}
+
+// Soniyani "3:45" ko'rinishiga aylantirish.
+function fmtDuration(sec) {
+  const s = parseInt(sec, 10) || 0;
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, '0')}`;
+}
+
+// Musiqa qidiruv natijalari — har biri alohida qatorda tugma (song:<id>).
+function songResultsKeyboard(items) {
+  // items: [{ id, title, uploader, duration }]
+  const rows = items.map((it, i) => {
+    const dur = it.duration ? ` (${fmtDuration(it.duration)})` : '';
+    const who = it.uploader ? ` — ${it.uploader}` : '';
+    let label = `${i + 1}. ${it.title}${who}${dur}`;
+    if (label.length > 60) label = label.slice(0, 57) + '…';
+    return [{ text: label, callback_data: `song:${it.id}` }];
+  });
+  return { inline_keyboard: rows };
+}
+
+// /start uchun "➕ Guruhga qo'shish" tugmasi.
+function addToGroupKeyboard(botUsername) {
+  if (!botUsername) return undefined;
+  return {
+    inline_keyboard: [
+      [
+        {
+          text: '➕ Guruhga qo\'shish',
+          url: `https://t.me/${botUsername}?startgroup=true`,
+        },
+      ],
+    ],
+  };
+}
+
 module.exports = {
   youtubeFormatKeyboard,
   subscriptionKeyboard,
@@ -86,4 +131,8 @@ module.exports = {
   adminChannelsKeyboard,
   broadcastModeKeyboard,
   backToMenuKeyboard,
+  audioButtonKeyboard,
+  songResultsKeyboard,
+  addToGroupKeyboard,
+  fmtDuration,
 };
