@@ -38,6 +38,7 @@ function buildStatsText() {
   const stats = storage.getStats();
   const totalUsers = storage.getUserCount();
   const activeToday = storage.getActiveTodayCount();
+  const groupCount = storage.getGroupCount();
   const today = new Date().toISOString().slice(0, 10);
   const todayDownloads = (stats.daily && stats.daily[today]) || 0;
 
@@ -52,12 +53,27 @@ function buildStatsText() {
   return (
     '📊 <b>Statistika</b>\n\n' +
     `👥 Jami foydalanuvchilar: <b>${totalUsers}</b>\n` +
+    `👥 Guruhlar: <b>${groupCount}</b>\n` +
     `🟢 Bugungi faollar: <b>${activeToday}</b>\n` +
     `📥 Jami yuklashlar: <b>${stats.totalDownloads || 0}</b>\n` +
-    `📆 Bugungi yuklashlar: <b>${todayDownloads}</b>\n\n` +
+    `📆 Bugungi yuklashlar: <b>${todayDownloads}</b>\n` +
+    `🎵 MP3 yuklashlar: <b>${stats.mp3Downloads || 0}</b>\n` +
+    `🔎 Musiqa qidiruvlar: <b>${stats.musicSearches || 0}</b>\n\n` +
     '📌 <b>Platforma bo\'yicha:</b>\n' +
     platLines
   );
+}
+
+function buildGroupsText() {
+  const groups = storage.getGroups();
+  const entries = Object.entries(groups);
+  if (!entries.length) return '👥 <b>Guruhlar</b>\n\nHali guruh yo\'q.';
+  const lines = entries.slice(0, 30).map(([id, g], i) => {
+    const members = g.membersCount ? ` · ${g.membersCount} a'zo` : '';
+    const by = g.addedByName ? ` · qo'shdi: ${g.addedByName}` : '';
+    return `${i + 1}. ${g.title || '(nomsiz)'}\n    ID: <code>${id}</code>${members}${by}`;
+  });
+  return `👥 <b>Guruhlar</b> (${entries.length})\n\n` + lines.join('\n');
 }
 
 function buildUsersText() {
@@ -136,6 +152,10 @@ async function handleAdminCallback(bot, query) {
 
     case 'users':
       await editMenu(buildUsersText(), backToMenuKeyboard());
+      break;
+
+    case 'groups':
+      await editMenu(buildGroupsText(), backToMenuKeyboard());
       break;
 
     case 'channels':

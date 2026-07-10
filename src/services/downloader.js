@@ -37,6 +37,37 @@ class TooLargeError extends Error {
   }
 }
 
+// yt-dlp URL'da video topa olmaganda (rasm bo'lishi mumkin) — gallery-dl'ga o'tamiz.
+class NoVideoError extends Error {
+  constructor() {
+    super('NO_VIDEO');
+    this.name = 'NoVideoError';
+    this.code = 'NO_VIDEO';
+  }
+}
+
+// "Bu yerda video yo'q" turidagi xato belgilari.
+const NO_VIDEO_MARKERS = [
+  'no video',
+  'there is no video',
+  'unsupported url',
+  'no media found',
+  'no video formats found',
+  'requested format is not available',
+  'no formats found',
+];
+
+function isNoVideo(text) {
+  if (!text) return false;
+  const lower = String(text).toLowerCase();
+  return NO_VIDEO_MARKERS.some((m) => lower.includes(m));
+}
+
+// cookies.txt mavjudligini bildiradi.
+function hasCookies() {
+  return Boolean(config.YTDLP_COOKIES && fs.existsSync(config.YTDLP_COOKIES));
+}
+
 // yt-dlp uchun umumiy argumentlar (cookies opsional).
 function commonArgs() {
   const args = [
@@ -177,6 +208,9 @@ async function downloadVideo(url, opts = {}) {
     if (isBotCheck(combined)) {
       throw new BotCheckError();
     }
+    if (isNoVideo(combined)) {
+      throw new NoVideoError();
+    }
     throw err;
   }
 
@@ -192,6 +226,208 @@ async function downloadVideo(url, opts = {}) {
   }
 
   return { filePath, size, token };
+}
+
+// ---- Metadata (probe) ----------------------------------------------------
+
+// URL uchun title/uploader/duration ni oladi (audio metadata uchun).
+async function probe(url) {
+  const args = [
+    ...commonArgs(),
+    '--print',
+    '%(title)s\n%(uploader)s\n%(duration)s',
+    url,
+  ];
+  try {
+    const { stdout } = await runYtDlp(args, { timeout: 60000 });
+    const [title = '', uploader = '', duration = ''] = stdout.split('\n');
+    return {
+      title: title.trim() && title.trim() !== 'NA' ? title.trim() : '',
+      uploader: uploader.trim() && uploader.trim() !== 'NA' ? uploader.trim() : '',
+      duration: parseInt(duration, 10) || 0,
+    };
+  } catch (_) {
+    return { title: '', uploader: '', duration: 0 };
+  }
+}
+
+// ---- Audio (MP3) ---------------------------------------------------------
+
+/**
+ * URL'dan MP3 audio yuklaydi (metadata bilan).
+ * @param {string} url
+ * @param {object} known — oldindan ma'lum meta { title, uploader, duration }
+ * @returns {Promise<{ filePath, size, token, title, performer, duration }>}
+ */
+async function downloadAudio(url, known = {}) {
+  const token = makeToken();
+  const dir = config.DOWNLOADS_DIR;
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+  // Metadata: qidiruvdan kelgan bo'lsa ishlatamiz, aks holda probe qilamiz.
+  let meta = {
+    title: known.title || '',
+    uploader: known.uploader || '',
+    duration: known.duration || 0,
+  };
+  if (!meta.title) {
+    meta = await probe(url);
+  }
+
+  const outputTemplate = path.join(dir, `${token}.%(ext)s`);
+  const args = [
+    ...commonArgs(),
+    '-o',
+    outputTemplate,
+    '-f',
+    'bestaudio/best',
+    '--extract-audio',
+    '--audio-format',
+    'mp3',
+    '--audio-quality',
+    '0',
+    '--embed-metadata',
+    url,
+  ];
+
+  try {
+    await runYtDlp(args);
+  } catch (err) {
+    const combined = `${err.stderr || ''}\n${err.stdout || ''}\n${err.message || ''}`;
+    cleanupToken(dir, token);
+    if (isBotCheck(combined)) throw new BotCheckError();
+    throw err;
+  }
+
+  const filePath = findOutputFile(dir, token);
+  if (!filePath) throw new Error('AUDIO_TOPILMADI');
+
+  const size = fs.statSync(filePath).size;
+  if (size > MAX_BYTES) {
+    cleanupToken(dir, token);
+    throw new TooLargeError(Math.round((size / (1024 * 1024)) * 10) / 10);
+  }
+
+  return {
+    filePath,
+    size,
+    token,
+    title: meta.title || 'Audio',
+    performer: meta.uploader || '',
+    duration: meta.duration || 0,
+  };
+}
+
+// ---- Qidiruv -------------------------------------------------------------
+
+/**
+ * yt-dlp orqali musiqa qidiradi.
+ * @param {string} query
+ * @param {string} provider — 'sc' (SoundCloud) yoki 'yt' (YouTube)
+ * @param {number} limit
+ * @returns {Promise<Array<{ title, uploader, duration, url }>>}
+ */
+async function search(query, provider = 'sc', limit = 5) {
+  const prefix = provider === 'yt' ? 'ytsearch' : 'scsearch';
+  const term = `${prefix}${limit}:${query}`;
+  const args = [...commonArgs(), '--flat-playlist', '--dump-json', term];
+
+  const { stdout } = await runYtDlp(args, { timeout: 60000 });
+  const results = [];
+  for (const line of stdout.split('\n')) {
+    const t = line.trim();
+    if (!t) continue;
+    try {
+      const j = JSON.parse(t);
+      let url = j.webpage_url || j.url || '';
+      // flat-playlist ba'zan to'liq URL bermaydi — id'dan quramiz
+      if (url && !/^https?:/i.test(url)) {
+        if (provider === 'yt' || /youtube/i.test(String(j.ie_key || ''))) {
+          url = `https://www.youtube.com/watch?v=${j.id}`;
+        } else {
+          url = '';
+        }
+      }
+      if (!url && j.id && provider === 'yt') {
+        url = `https://www.youtube.com/watch?v=${j.id}`;
+      }
+      if (url) {
+        results.push({
+          title: j.title || '(nomsiz)',
+          uploader: j.uploader || j.channel || j.uploader_id || '',
+          duration: j.duration || 0,
+          url,
+        });
+      }
+    } catch (_) {
+      /* buzuq qatorni tashlab ketamiz */
+    }
+  }
+  return results;
+}
+
+// ---- Rasm (gallery-dl) ---------------------------------------------------
+
+function runGalleryDl(args, { timeout = 120000 } = {}) {
+  return new Promise((resolve, reject) => {
+    execFile(
+      config.GALLERY_DL_PATH,
+      args,
+      { timeout, maxBuffer: 1024 * 1024 * 20 },
+      (err, stdout, stderr) => {
+        if (err) {
+          err.stdout = (stdout || '').toString();
+          err.stderr = (stderr || '').toString();
+          return reject(err);
+        }
+        resolve({ stdout: (stdout || '').toString(), stderr: (stderr || '').toString() });
+      }
+    );
+  });
+}
+
+const IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
+
+// Papkani rekursiv aylanib rasm fayllarini yig'amiz.
+function collectImages(dir, acc = []) {
+  for (const name of fs.readdirSync(dir)) {
+    const full = path.join(dir, name);
+    const st = fs.statSync(full);
+    if (st.isDirectory()) {
+      collectImages(full, acc);
+    } else if (IMAGE_EXT.includes(path.extname(name).toLowerCase()) && st.size <= MAX_BYTES) {
+      acc.push(full);
+    }
+  }
+  return acc;
+}
+
+/**
+ * gallery-dl orqali rasm(lar)ni yuklaydi.
+ * @returns {Promise<{ files: string[], token: string, dir: string }>}
+ */
+async function downloadImages(url, { max = 10 } = {}) {
+  const token = makeToken();
+  const dir = path.join(config.DOWNLOADS_DIR, token);
+  fs.mkdirSync(dir, { recursive: true });
+
+  const args = ['-D', dir, '--range', `1-${max}`];
+  if (hasCookies()) args.push('--cookies', config.YTDLP_COOKIES);
+  args.push(url);
+
+  await runGalleryDl(args);
+
+  const files = collectImages(dir).slice(0, max);
+  return { files, token, dir };
+}
+
+// Rasm papkasini butunlay o'chirish.
+function removeDir(dir) {
+  try {
+    if (dir && fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+  } catch (_) {
+    /* ignore */
+  }
 }
 
 // Yuklangan faylni (va token bilan bog'liq qoldiqlarni) o'chirish.
@@ -215,7 +451,12 @@ function cleanDownloadsDir() {
     for (const f of fs.readdirSync(dir)) {
       try {
         const full = path.join(dir, f);
-        if (fs.statSync(full).isFile()) fs.unlinkSync(full);
+        const st = fs.statSync(full);
+        if (st.isDirectory()) {
+          fs.rmSync(full, { recursive: true, force: true });
+        } else {
+          fs.unlinkSync(full);
+        }
       } catch (_) {
         /* ignore */
       }
@@ -227,10 +468,17 @@ function cleanDownloadsDir() {
 
 module.exports = {
   downloadVideo,
+  downloadAudio,
+  downloadImages,
+  search,
+  probe,
   removeFile,
+  removeDir,
   cleanDownloadsDir,
   makeToken,
+  hasCookies,
   BotCheckError,
   TooLargeError,
+  NoVideoError,
   MAX_MB,
 };
