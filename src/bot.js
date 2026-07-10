@@ -1,6 +1,8 @@
 'use strict';
 
 const { execFile } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
 const { config } = require('./config');
 const storage = require('./services/storage');
@@ -23,6 +25,23 @@ storage.init();
 // Har restartda vaqtinchalik yuklamalar tozalanadi
 downloader.cleanDownloadsDir();
 
+// Diagnostika: yt-dlp qayerdaligini aniqlash uchun muhit ma'lumotlari.
+function logYtDlpDiagnostics() {
+  console.log('[diag] process.cwd():', process.cwd());
+  console.log('[diag] YTDLP_PATH:', config.YTDLP_PATH);
+  console.log('[diag] fs.existsSync(YTDLP_PATH):', fs.existsSync(config.YTDLP_PATH));
+  const binDir = path.dirname(config.YTDLP_PATH);
+  if (fs.existsSync(binDir)) {
+    try {
+      console.log(`[diag] readdirSync(${binDir}):`, fs.readdirSync(binDir));
+    } catch (err) {
+      console.log(`[diag] readdirSync(${binDir}) xato:`, err.message);
+    }
+  } else {
+    console.log(`[diag] bin papka mavjud emas: ${binDir}`);
+  }
+}
+
 // yt-dlp mavjud va ishlayotganini tekshiramiz (execFile — shell'siz).
 function checkYtDlp() {
   execFile(config.YTDLP_PATH, ['--version'], { timeout: 15000 }, (err, stdout) => {
@@ -36,6 +55,7 @@ function checkYtDlp() {
     console.log(`✅ yt-dlp mavjud: v${String(stdout).trim()} (${config.YTDLP_PATH})`);
   });
 }
+logYtDlpDiagnostics();
 checkYtDlp();
 
 const bot = new TelegramBot(config.BOT_TOKEN, { polling: true });

@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/bot.js",
-    "dev": "node src/bot.js"
+    "dev": "node src/bot.js",
+    "postinstall": "mkdir -p bin && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o bin/yt-dlp && chmod +x bin/yt-dlp"
   },
   "engines": {
     "node": ">=18"
