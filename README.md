@@ -41,7 +41,7 @@ cp .env.example .env
 | `DATA_DIR`      | JSON papka (lokal `./data`, Railway `/app/data`)    |
 | `DOWNLOADS_DIR` | Vaqtinchalik videolar papkasi (default `./downloads`)|
 | `YTDLP_COOKIES` | Opsional: `cookies.txt` yo'li (YouTube bot-check)   |
-| `YTDLP_PATH`    | Opsional: yt-dlp binary yo'li (default `yt-dlp`)     |
+| `YTDLP_PATH`    | Opsional: yt-dlp binary yo'li (default `./bin/yt-dlp`)|
 
 ## 🚀 1. Lokal ishga tushirish (bitta qatorda)
 
@@ -61,11 +61,12 @@ npm install && cp -n .env.example .env && node src/bot.js
    - `ADMIN_IDS` = `123456789` (o'z Telegram ID(lar)ingiz)
    - `DATA_DIR` = `/app/data`
    - (opsional) `YTDLP_COOKIES` = `/app/data/cookies.txt`
-5. `nixpacks.toml` avtomatik ishlaydi — `nodejs`, `python311`, `ffmpeg` o'rnatadi
-   va `pip install yt-dlp` qiladi.
+5. `nixpacks.toml` avtomatik ishlaydi — `nodejs`, `ffmpeg`, `curl` o'rnatadi va
+   yt-dlp'ning **standalone binary**'sini `./bin/yt-dlp` ga yuklab oladi
+   (python kerak emas). Bot ishga tushganda `yt-dlp --version` log qilinadi.
 6. Deploy tugagach bot polling rejimida ishga tushadi.
 
-> **Agar nixpacks bilan muammo bo'lsa** (yt-dlp topilmasa): fallback sifatida
+> **Agar binary yuklab bo'lmasa** (curl xatosi): fallback sifatida
 > `youtube-dl-exec` yoki `yt-dlp-wrap` npm paketini qo'shib, `YTDLP_PATH` ni
 > o'sha paket beradigan binary yo'liga sozlang.
 
