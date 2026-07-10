@@ -1,10 +1,11 @@
 [phases.setup]
-nixPkgs = ["nodejs", "python311", "ffmpeg"]
+nixPkgs = ["nodejs", "ffmpeg", "curl"]
 
 [phases.install]
 cmds = [
   "npm install",
-  "pip install yt-dlp --break-system-packages || pip install yt-dlp"
+  "mkdir -p ./bin",
+  "curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ./bin/yt-dlp && chmod +x ./bin/yt-dlp"
 ]
 
 [start]

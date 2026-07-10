@@ -29,8 +29,8 @@ const config = {
   DOWNLOADS_DIR,
   // Opsional cookies.txt yo'li (YouTube "bot emasligini tasdiqlang" xatosi uchun)
   YTDLP_COOKIES: process.env.YTDLP_COOKIES || '',
-  // yt-dlp binary nomi/yo'li
-  YTDLP_PATH: process.env.YTDLP_PATH || 'yt-dlp',
+  // yt-dlp binary yo'li — Railwayda standalone binary ./bin/yt-dlp ga yuklanadi
+  YTDLP_PATH: process.env.YTDLP_PATH || './bin/yt-dlp',
 
   // Telegram Bot API orqali fayl yuborish limiti (50 MB)
   MAX_FILE_SIZE_MB: 50,

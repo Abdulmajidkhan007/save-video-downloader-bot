@@ -1,5 +1,6 @@
 'use strict';
 
+const { execFile } = require('child_process');
 const TelegramBot = require('node-telegram-bot-api');
 const { config } = require('./config');
 const storage = require('./services/storage');
@@ -21,6 +22,21 @@ if (!config.BOT_TOKEN) {
 storage.init();
 // Har restartda vaqtinchalik yuklamalar tozalanadi
 downloader.cleanDownloadsDir();
+
+// yt-dlp mavjud va ishlayotganini tekshiramiz (execFile — shell'siz).
+function checkYtDlp() {
+  execFile(config.YTDLP_PATH, ['--version'], { timeout: 15000 }, (err, stdout) => {
+    if (err) {
+      console.error(
+        `❌ yt-dlp ishlamadi (${config.YTDLP_PATH}): ${err.message}\n` +
+          '   Binary yo\'q yoki bajariladigan emas. Deploy loglarini tekshiring.'
+      );
+      return;
+    }
+    console.log(`✅ yt-dlp mavjud: v${String(stdout).trim()} (${config.YTDLP_PATH})`);
+  });
+}
+checkYtDlp();
 
 const bot = new TelegramBot(config.BOT_TOKEN, { polling: true });
 
