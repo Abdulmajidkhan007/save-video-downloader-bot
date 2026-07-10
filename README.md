@@ -14,14 +14,24 @@ CommonJS (`require`), hech qanday database yo'q — JSON fayl persistensiya.
 - **Rasm yuklash** (Pinterest va boshqalar) — `gallery-dl` orqali, bittalik yoki albom
 - **Musiqa qidirish** — matn yozing, SoundCloud/YouTube'dan top 5 natija, tanlab MP3
 - **Musiqa aniqlash** (Shazam kabi) — ovozli xabar yuboring, ACRCloud orqali aniqlanadi
-- **Guruh rejimi** — guruhlarda faqat havolalar uchun ishlaydi (obuna tekshirilmaydi)
+- **Guruh rejimi** — guruhlarda faqat havolalar uchun ishlaydi; **obuna guruhda ham**
+  tekshiriladi (per-user «✅ Tekshirish» tugmasi — faqat o'sha user bosa oladi)
 - Barcha yuborishlar **reply** ko'rinishida (qaysi havolaga javob kelgani ko'rinadi)
 - YouTube bot-check yechimi: `YTDLP_COOKIES_B64` (base64 cookies.txt)
 - 50MB limit nazorati (Telegram Bot API cheklovi)
-- Majburiy obuna (kanallarga `getChatMember` orqali tekshirish — faqat shaxsiy chatda)
-- **Admin xabardorligi**: yangi user, guruhga qo'shilish/chiqarilish, har 100-yuklash, kritik xatolar
-- Admin panel: statistika (MP3/qidiruv/guruhlar), broadcast, kanallar, guruhlar, foydalanuvchilar
-- Xavfsizlik: `execFile` (shell injection yo'q), whitelist URL regexlar, atomik JSON yozish
+- Majburiy obuna (kanallarga `getChatMember` orqali tekshirish)
+- **Broadcast aniqligi**: faqat `private` userlarga; bloklaganlar avtomatik
+  belgilanadi va keyingi broadcastlarda o'tkazib yuboriladi; hisobot
+  «Jami private / Yuborildi / Bloklagan»
+- **Xavfsizlik**: har callback'da ADMIN_IDS tekshiruvi + callback_data formati
+  validatsiyasi; rate limiting (daqiqasiga 5 yuklash); anti-flood (bir xil URL 30s);
+  `execFile` (shell injection yo'q), whitelist URL regexlar, atomik JSON yozish
+- **Kengaytirilgan user ma'lumotlari**: til, premium, username tarixi, manba,
+  platforma bo'yicha yuklashlar — admin «👤 User qidirish» orqali to'liq karta
+- **Admin xabardorligi**: yangi user, guruhga qo'shilish/chiqarilish, har 100-yuklash,
+  kritik xatolar, **ruxsatsiz `/admin` urinishi**
+- Admin panel: statistika, broadcast, kanallar, guruhlar, foydalanuvchilar,
+  user qidirish, limitga urilganlar (24s), admin loglar (`admin_log.json`)
 
 ## 📦 Talablar
 
@@ -125,7 +135,9 @@ src/
 │   ├── acrcloud.js        # musiqa aniqlash (HMAC-SHA1 identify API)
 │   ├── media.js           # ffmpeg — audio namuna kesish
 │   ├── notify.js          # notifyAdmins
-│   └── broadcast.js       # ommaviy xabar (rate-limit, retry_after)
+│   ├── ratelimit.js       # rate limiting + anti-flood (xotirada)
+│   ├── adminlog.js        # admin harakatlari logi (admin_log.json)
+│   └── broadcast.js       # ommaviy xabar (private-only, blocked belgisi)
 └── utils/
     ├── platform.js        # URL → platforma (whitelist regex)
     └── keyboard.js        # inline keyboardlar

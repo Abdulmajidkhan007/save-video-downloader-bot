@@ -17,7 +17,8 @@ function youtubeFormatKeyboard(token) {
 }
 
 // Majburiy obuna: kanal tugmalari + tekshirish tugmasi.
-function subscriptionKeyboard(channels) {
+// userId berilsa — tugma faqat o'sha user uchun (check_sub:<uid>).
+function subscriptionKeyboard(channels, userId) {
   const rows = channels
     .filter((c) => c.username)
     .map((c) => [
@@ -26,7 +27,8 @@ function subscriptionKeyboard(channels) {
         url: `https://t.me/${String(c.username).replace(/^@/, '')}`,
       },
     ]);
-  rows.push([{ text: '✅ Obunani tekshirish', callback_data: 'check_sub' }]);
+  const cb = userId ? `check_sub:${userId}` : 'check_sub';
+  rows.push([{ text: '✅ Obunani tekshirish', callback_data: cb }]);
   return { inline_keyboard: rows };
 }
 
@@ -42,7 +44,14 @@ function adminMenuKeyboard() {
         { text: '📣 Kanallar', callback_data: 'admin|channels' },
         { text: '👥 Foydalanuvchilar', callback_data: 'admin|users' },
       ],
-      [{ text: '👥 Guruhlar', callback_data: 'admin|groups' }],
+      [
+        { text: '👥 Guruhlar', callback_data: 'admin|groups' },
+        { text: '👤 User qidirish', callback_data: 'admin|finduser' },
+      ],
+      [
+        { text: '🚦 Limitlar', callback_data: 'admin|limits' },
+        { text: '🧾 Loglar', callback_data: 'admin|logs' },
+      ],
     ],
   };
 }

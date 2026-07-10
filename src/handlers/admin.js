@@ -3,6 +3,9 @@
 const storage = require('../services/storage');
 const { isAdmin } = require('../config');
 const { runBroadcast } = require('../services/broadcast');
+const ratelimit = require('../services/ratelimit');
+const adminlog = require('../services/adminlog');
+const notify = require('../services/notify');
 const {
   adminMenuKeyboard,
   adminChannelsKeyboard,
@@ -11,7 +14,7 @@ const {
 } = require('../utils/keyboard');
 
 // Admin uchun ko'p qadamli holat (state machine).
-// userId -> { action: 'add_channel' | 'broadcast', mode?: 'copy'|'forward' }
+// userId -> { action: 'add_channel' | 'broadcast' | 'search_user', mode?: 'copy'|'forward' }
 const adminState = new Map();
 
 // Admin holatda ekanligini boshqa handlerlar tekshirishi uchun.
@@ -19,10 +22,31 @@ function isAwaitingInput(userId) {
   return adminState.has(String(userId));
 }
 
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(
+    /[&<>]/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])
+  );
+}
+
+function adminInfo(from) {
+  return {
+    id: from.id,
+    name: from.first_name || (from.username ? '@' + from.username : String(from.id)),
+  };
+}
+
 // ---- /admin buyrug'i -----------------------------------------------------
 
 async function handleAdminCommand(bot, msg) {
   if (!isAdmin(msg.from.id)) {
+    // Ruxsatsiz urinish — adminlarga ogohlantirish yuboramiz.
+    notify.notifyAdmins(
+      '⚠️ <b>Ruxsatsiz admin urinish</b>\n' +
+        `👤 ${escapeHtml(msg.from.first_name || '')} ` +
+        `${msg.from.username ? '@' + escapeHtml(msg.from.username) : ''}\n` +
+        `🆔 <code>${msg.from.id}</code>`
+    );
     await bot.sendMessage(msg.chat.id, '⛔️ Bu buyruq faqat adminlar uchun.');
     return;
   }
@@ -37,6 +61,8 @@ async function handleAdminCommand(bot, msg) {
 function buildStatsText() {
   const stats = storage.getStats();
   const totalUsers = storage.getUserCount();
+  const privateUsers = storage.getPrivateCount();
+  const groupSeen = storage.getGroupSeenCount();
   const activeToday = storage.getActiveTodayCount();
   const groupCount = storage.getGroupCount();
   const today = new Date().toISOString().slice(0, 10);
@@ -53,6 +79,8 @@ function buildStatsText() {
   return (
     '📊 <b>Statistika</b>\n\n' +
     `👥 Jami foydalanuvchilar: <b>${totalUsers}</b>\n` +
+    `   • private (/start): <b>${privateUsers}</b>\n` +
+    `   • guruh orqali ko'rilgan: <b>${groupSeen}</b>\n` +
     `👥 Guruhlar: <b>${groupCount}</b>\n` +
     `🟢 Bugungi faollar: <b>${activeToday}</b>\n` +
     `📥 Jami yuklashlar: <b>${stats.totalDownloads || 0}</b>\n` +
@@ -62,6 +90,58 @@ function buildStatsText() {
     '📌 <b>Platforma bo\'yicha:</b>\n' +
     platLines
   );
+}
+
+// Bitta foydalanuvchining to'liq kartasi.
+function buildUserCard(u) {
+  const uname = u.username ? '@' + escapeHtml(u.username) : '(username yo\'q)';
+  const hist =
+    u.usernameHistory && u.usernameHistory.length
+      ? u.usernameHistory.map((h) => '@' + escapeHtml(h)).join(', ')
+      : '—';
+  const byPlat =
+    u.downloadsByPlatform && Object.keys(u.downloadsByPlatform).length
+      ? Object.entries(u.downloadsByPlatform)
+          .map(([p, n]) => `${p}: ${n}`)
+          .join(', ')
+      : '—';
+  return (
+    '👤 <b>Foydalanuvchi kartasi</b>\n\n' +
+    `Ism: ${escapeHtml(u.firstName || '-')}\n` +
+    `Username: ${uname}\n` +
+    `Username tarixi: ${hist}\n` +
+    `🆔 ID: <code>${u.id}</code>\n` +
+    `🔗 <a href="tg://user?id=${u.id}">Profilga o'tish</a>\n` +
+    `Til: ${escapeHtml(u.languageCode || '-')}\n` +
+    `Premium: ${u.isPremium ? 'ha' : "yo'q"}\n` +
+    `Manba: ${escapeHtml(u.source || '-')}\n` +
+    `Bloklagan: ${u.blocked ? 'ha' : "yo'q"}\n` +
+    `Birinchi ko'rilgan: ${(u.firstSeen || u.joinedAt || '-').slice(0, 19).replace('T', ' ')}\n` +
+    `Oxirgi faollik: ${(u.lastActive || '-').slice(0, 19).replace('T', ' ')}\n` +
+    `📥 Yuklashlar: <b>${u.downloads || 0}</b>\n` +
+    `   platforma bo'yicha: ${byPlat}`
+  );
+}
+
+function buildLimitsText() {
+  const hits = ratelimit.getRecentLimitHits();
+  if (!hits.length) return '🚦 <b>Limitga urilganlar (24s)</b>\n\nHech kim yo\'q.';
+  const lines = hits.slice(0, 20).map((h, i) => {
+    const uname = h.username ? '@' + escapeHtml(h.username) : '';
+    const when = new Date(h.lastHit).toISOString().slice(11, 19);
+    return `${i + 1}. ${escapeHtml(h.firstName || '-')} ${uname}\n    ID: <code>${h.id}</code> · ${h.count} marta · oxirgi ${when}`;
+  });
+  return '🚦 <b>So\'nggi 24 soatda limitga urilganlar</b>\n\n' + lines.join('\n');
+}
+
+function buildLogsText() {
+  const logs = adminlog.getRecent(10);
+  if (!logs.length) return '🧾 <b>Admin loglar</b>\n\nHali yozuv yo\'q.';
+  const lines = logs.map((l) => {
+    const when = (l.at || '').slice(0, 19).replace('T', ' ');
+    return `• ${when} — <b>${escapeHtml(l.action)}</b>\n   ${escapeHtml(l.adminName)}: ${escapeHtml(l.detail)}`;
+  });
+  return '🧾 <b>Admin loglar (oxirgi 10)</b>\n\n' + lines.join('\n');
 }
 
 function buildGroupsText() {
@@ -158,6 +238,24 @@ async function handleAdminCallback(bot, query) {
       await editMenu(buildGroupsText(), backToMenuKeyboard());
       break;
 
+    case 'limits':
+      await editMenu(buildLimitsText(), backToMenuKeyboard());
+      break;
+
+    case 'logs':
+      await editMenu(buildLogsText(), backToMenuKeyboard());
+      break;
+
+    case 'finduser':
+      adminState.set(String(userId), { action: 'search_user' });
+      await editMenu(
+        '👤 <b>User qidirish</b>\n\n' +
+          'Foydalanuvchi <b>ID</b> raqamini yoki <b>@username</b> ini yuboring.\n\n' +
+          'Bekor qilish: /admin',
+        backToMenuKeyboard()
+      );
+      break;
+
     case 'channels':
       await editMenu(buildChannelsText(), adminChannelsKeyboard(storage.getChannels()));
       break;
@@ -177,6 +275,9 @@ async function handleAdminCallback(bot, query) {
     case 'delchan': {
       const id = parts.slice(2).join('|');
       const removed = storage.removeChannel(id);
+      if (removed) {
+        adminlog.log('channel_remove', adminInfo(query.from), `kanal: ${id}`);
+      }
       const note = removed ? '✅ Kanal o\'chirildi.' : '⚠️ Kanal topilmadi.';
       await editMenu(
         note + '\n\n' + buildChannelsText(),
@@ -237,10 +338,30 @@ async function handleAdminInput(bot, msg) {
     return true;
   }
 
+  // User qidirish
+  if (state.action === 'search_user') {
+    adminState.delete(userId);
+    const found = storage.findUser(msg.text || '');
+    if (!found) {
+      await bot.sendMessage(
+        chatId,
+        '❌ Foydalanuvchi topilmadi. ID yoki @username to\'g\'riligini tekshiring.',
+        { reply_markup: backToMenuKeyboard() }
+      );
+      return true;
+    }
+    await bot.sendMessage(chatId, buildUserCard(found), {
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+      reply_markup: backToMenuKeyboard(),
+    });
+    return true;
+  }
+
   // Broadcast
   if (state.action === 'broadcast') {
     adminState.delete(userId);
-    await bot.sendMessage(chatId, '📤 Broadcast boshlandi...');
+    await bot.sendMessage(chatId, '📤 Broadcast boshlandi (faqat private userlar)...');
     const progressMsg = await bot.sendMessage(chatId, '0 yuborildi...');
 
     const result = await runBroadcast(bot, {
@@ -258,12 +379,19 @@ async function handleAdminInput(bot, msg) {
       },
     });
 
+    adminlog.log(
+      'broadcast',
+      adminInfo(msg.from),
+      `mode=${state.mode} jami=${result.total} yuborildi=${result.sent} bloklagan=${result.blocked}`
+    );
+
     await bot.sendMessage(
       chatId,
       '✅ <b>Broadcast yakunlandi</b>\n\n' +
-        `📨 Jami: ${result.total}\n` +
+        `📨 Jami private: ${result.total}\n` +
         `✅ Yuborildi: ${result.sent}\n` +
-        `🚫 Yuborilmadi (bloklagan/xato): ${result.failed}`,
+        `🚫 Bloklagan: ${result.blocked}` +
+        (result.failed ? `\n⚠️ Boshqa xato: ${result.failed}` : ''),
       { parse_mode: 'HTML' }
     );
     return true;
@@ -313,6 +441,11 @@ async function addChannelFromMessage(bot, msg) {
       username: chat.username || '',
     });
     if (added) {
+      adminlog.log(
+        'channel_add',
+        adminInfo(msg.from),
+        `kanal: ${chat.title || ''} (${chat.username ? '@' + chat.username : chat.id})`
+      );
       await bot.sendMessage(chatId, `✅ «${chat.title}» kanali qo\'shildi.`, {
         reply_markup: adminChannelsKeyboard(storage.getChannels()),
       });

@@ -82,7 +82,9 @@ function getUser(userId) {
 }
 
 // Foydalanuvchini ro'yxatga qo'shadi yoki mavjudini yangilaydi.
-function upsertUser(from) {
+// source: 'private' (/start yoki shaxsiy chat) yoki 'group' (faqat guruhda ko'rilgan).
+// 'private' har doim 'group' dan ustun — private user hech qachon group'ga tushmaydi.
+function upsertUser(from, source) {
   const users = getUsers();
   const id = String(from.id);
   const now = new Date().toISOString();
@@ -90,14 +92,40 @@ function upsertUser(from) {
 
   if (existing) {
     existing.firstName = from.first_name || existing.firstName || '';
-    existing.username = from.username || existing.username || '';
+
+    // username o'zgargan bo'lsa — tarixni yangilaymiz (oxirgi 3 tasi)
+    if (from.username && from.username !== existing.username) {
+      existing.usernameHistory = existing.usernameHistory || [];
+      if (existing.username) {
+        existing.usernameHistory.push(existing.username);
+        existing.usernameHistory = existing.usernameHistory.slice(-3);
+      }
+      existing.username = from.username;
+    } else if (from.username) {
+      existing.username = from.username;
+    }
+
+    if (from.language_code) existing.languageCode = from.language_code;
+    if (typeof from.is_premium === 'boolean') existing.isPremium = from.is_premium;
+
+    // source'ni faqat yuqoriga ko'taramiz: group → private, lekin teskarisiga emas
+    if (source === 'private') existing.source = 'private';
+    else if (source === 'group' && !existing.source) existing.source = 'group';
+
     existing.lastActive = now;
   } else {
     users[id] = {
       firstName: from.first_name || '',
       username: from.username || '',
+      usernameHistory: [],
+      languageCode: from.language_code || '',
+      isPremium: Boolean(from.is_premium),
+      source: source || 'private',
+      blocked: false,
+      firstSeen: now,
       joinedAt: now,
       downloads: 0,
+      downloadsByPlatform: {},
       lastActive: now,
     };
   }
@@ -106,15 +134,62 @@ function upsertUser(from) {
   return Object.assign({}, users[id], { isNew: !existing });
 }
 
-// Foydalanuvchining yuklashlar sonini oshiradi.
-function incrementUserDownloads(userId) {
+// Foydalanuvchining yuklashlar sonini oshiradi (platforma bo'yicha ham).
+function incrementUserDownloads(userId, platform) {
   const users = getUsers();
   const id = String(userId);
   if (users[id]) {
     users[id].downloads = (users[id].downloads || 0) + 1;
+    if (platform) {
+      users[id].downloadsByPlatform = users[id].downloadsByPlatform || {};
+      users[id].downloadsByPlatform[platform] =
+        (users[id].downloadsByPlatform[platform] || 0) + 1;
+    }
     users[id].lastActive = new Date().toISOString();
     saveUsers(users);
   }
+}
+
+// Foydalanuvchiga blocked belgisi qo'yish/olib tashlash.
+function setUserBlocked(userId, blocked) {
+  const users = getUsers();
+  const id = String(userId);
+  if (users[id]) {
+    users[id].blocked = Boolean(blocked);
+    saveUsers(users);
+  }
+}
+
+// Broadcast uchun: faqat 'private' va bloklanmagan foydalanuvchilar.
+function getPrivateUserIds() {
+  const users = getUsers();
+  return Object.keys(users).filter(
+    (id) => users[id].source === 'private' && !users[id].blocked
+  );
+}
+
+// Faqat guruh orqali ko'rilgan foydalanuvchilar soni.
+function getGroupSeenCount() {
+  const users = getUsers();
+  return Object.values(users).filter((u) => u.source === 'group').length;
+}
+
+function getPrivateCount() {
+  const users = getUsers();
+  return Object.values(users).filter((u) => u.source === 'private').length;
+}
+
+// ID yoki @username bo'yicha foydalanuvchi qidirish.
+function findUser(query) {
+  const users = getUsers();
+  const q = String(query).trim().replace(/^@/, '').toLowerCase();
+  // ID bo'yicha
+  if (users[q]) return { id: q, ...users[q] };
+  // username bo'yicha
+  for (const [id, u] of Object.entries(users)) {
+    if (u.username && u.username.toLowerCase() === q) return { id, ...u };
+  }
+  return null;
 }
 
 function getAllUserIds() {
@@ -280,6 +355,11 @@ module.exports = {
   getUser,
   upsertUser,
   incrementUserDownloads,
+  setUserBlocked,
+  getPrivateUserIds,
+  getGroupSeenCount,
+  getPrivateCount,
+  findUser,
   getAllUserIds,
   getUserCount,
   getActiveTodayCount,
