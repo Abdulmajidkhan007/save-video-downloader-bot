@@ -52,6 +52,34 @@ function adminMenuKeyboard() {
         { text: '🚦 Limitlar', callback_data: 'admin|limits' },
         { text: '🧾 Loglar', callback_data: 'admin|logs' },
       ],
+      [{ text: '🏆 Referral reyting', callback_data: 'admin|referrals' }],
+    ],
+  };
+}
+
+// Guruhlar ro'yxati — har biri kartaga o'tish tugmasi (admin|group|<id>).
+function adminGroupsListKeyboard(groups) {
+  const rows = Object.entries(groups)
+    .slice(0, 50)
+    .map(([id, g]) => [
+      { text: `${g.title || '(nomsiz)'}`, callback_data: `admin|group|${id}` },
+    ]);
+  rows.push([{ text: '⬅️ Orqaga', callback_data: 'admin|menu' }]);
+  return { inline_keyboard: rows };
+}
+
+// Guruh a'zolari sahifalash navigatsiyasi (admin|gmpage|<id>|<page>).
+function groupMembersNavKeyboard(groupId, page, totalPages) {
+  const nav = [];
+  if (page > 0) nav.push({ text: '⬅️ Oldingi', callback_data: `admin|gmpage|${groupId}|${page - 1}` });
+  nav.push({ text: `${page + 1}/${totalPages}`, callback_data: 'noop' });
+  if (page < totalPages - 1) {
+    nav.push({ text: 'Keyingi ➡️', callback_data: `admin|gmpage|${groupId}|${page + 1}` });
+  }
+  return {
+    inline_keyboard: [
+      nav,
+      [{ text: '⬅️ Guruhlar', callback_data: 'admin|groups' }],
     ],
   };
 }
@@ -182,6 +210,8 @@ module.exports = {
   youtubeFormatKeyboard,
   subscriptionKeyboard,
   adminMenuKeyboard,
+  adminGroupsListKeyboard,
+  groupMembersNavKeyboard,
   adminChannelsKeyboard,
   broadcastTargetKeyboard,
   broadcastModeKeyboard,

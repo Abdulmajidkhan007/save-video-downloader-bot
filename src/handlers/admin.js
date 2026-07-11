@@ -1,18 +1,25 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const storage = require('../services/storage');
-const { isAdmin } = require('../config');
+const { isAdmin, config } = require('../config');
 const { runBroadcast } = require('../services/broadcast');
 const ratelimit = require('../services/ratelimit');
 const adminlog = require('../services/adminlog');
 const notify = require('../services/notify');
 const {
   adminMenuKeyboard,
+  adminGroupsListKeyboard,
+  groupMembersNavKeyboard,
   adminChannelsKeyboard,
   broadcastTargetKeyboard,
   broadcastModeKeyboard,
   backToMenuKeyboard,
 } = require('../utils/keyboard');
+
+const GROUP_MEMBERS_PER_PAGE = 30;
+const GROUP_MEMBERS_TXT_THRESHOLD = 100;
 
 // Admin uchun ko'p qadamli holat (state machine).
 // userId -> { action: 'add_channel' | 'broadcast' | 'search_user', mode?: 'copy'|'forward' }
@@ -87,10 +94,23 @@ function buildStatsText() {
     `📥 Jami yuklashlar: <b>${stats.totalDownloads || 0}</b>\n` +
     `📆 Bugungi yuklashlar: <b>${todayDownloads}</b>\n` +
     `🎵 MP3 yuklashlar: <b>${stats.mp3Downloads || 0}</b>\n` +
-    `🔎 Musiqa qidiruvlar: <b>${stats.musicSearches || 0}</b>\n\n` +
+    `🔎 Musiqa qidiruvlar: <b>${stats.musicSearches || 0}</b>\n` +
+    `🔗 Referral orqali kelganlar: <b>${storage.getReferredCount()}</b>\n\n` +
     '📌 <b>Platforma bo\'yicha:</b>\n' +
     platLines
   );
+}
+
+// Referral reyting — top 10 (points bo'yicha).
+function buildReferralText() {
+  const top = storage.getReferralLeaderboard(10);
+  if (!top.length) return '🏆 <b>Referral reyting</b>\n\nHali ball to\'plagan yo\'q.';
+  const lines = top.map((u, i) => {
+    const uname = u.username ? '@' + escapeHtml(u.username) : '(username yo\'q)';
+    const medal = ['🥇', '🥈', '🥉'][i] || `${i + 1}.`;
+    return `${medal} ${escapeHtml(u.firstName || '-')} ${uname} — ⭐️ ${u.points || 0} (${u.referrals || 0} ta)`;
+  });
+  return '🏆 <b>Referral reyting (top 10)</b>\n\n' + lines.join('\n');
 }
 
 // Bitta foydalanuvchining to'liq kartasi.
@@ -149,12 +169,140 @@ function buildGroupsText() {
   const groups = storage.getGroups();
   const entries = Object.entries(groups);
   if (!entries.length) return '👥 <b>Guruhlar</b>\n\nHali guruh yo\'q.';
-  const lines = entries.slice(0, 30).map(([id, g], i) => {
-    const members = g.membersCount ? ` · ${g.membersCount} a'zo` : '';
-    const by = g.addedByName ? ` · qo'shdi: ${g.addedByName}` : '';
-    return `${i + 1}. ${g.title || '(nomsiz)'}\n    ID: <code>${id}</code>${members}${by}`;
+  return `👥 <b>Guruhlar</b> (${entries.length})\n\nBatafsil ko'rish uchun tanlang:`;
+}
+
+function fmtDate(iso) {
+  return (iso || '-').slice(0, 19).replace('T', ' ');
+}
+
+// Guruh a'zosining bitta qatori (inline uchun, HTML).
+function memberLine(m, idx) {
+  const uname = m.username ? '@' + escapeHtml(m.username) : '';
+  const last = m.lastSeen ? m.lastSeen.slice(0, 10) : '-';
+  return `${idx}. ${escapeHtml(m.firstName || '-')} ${uname}\n    ID: <code>${m.id}</code> · oxirgi: ${last}`;
+}
+
+// Guruh kartasi (header) matnini quradi.
+function buildGroupCardHeader(groupId, group, realCount, seenCount) {
+  return (
+    `👥 <b>${escapeHtml(group.title || '(nomsiz)')}</b>\n` +
+    `🆔 <code>${groupId}</code>\n` +
+    `📊 Jami a'zolar: <b>${realCount}</b>\n` +
+    `👁 Ko'rilgan a'zolar: <b>${seenCount}/${realCount}</b>\n` +
+    `👤 Qo'shdi: ${escapeHtml(group.addedByName || '-')}\n` +
+    `📅 Qo'shilgan: ${fmtDate(group.addedAt)}\n\n` +
+    'ℹ️ <i>Telegram to\'liq a\'zolar ro\'yxatini bermaydi — bu faqat bot ' +
+    'ko\'rgan (yozgan/qo\'shilgan) faol a\'zolar.</i>'
+  );
+}
+
+// .txt fayl matnini quradi (>100 a'zo uchun).
+function buildMembersTxt(groupId, group, realCount, seen) {
+  const line = '═══════════════════════════════════';
+  const dash = '───────────────────────────────────';
+  let out = '';
+  out += line + '\n';
+  out += "  GURUH MA'LUMOTLARI\n";
+  out += line + '\n';
+  out += `Nomi:        ${group.title || '(nomsiz)'}\n`;
+  out += `ID:          ${groupId}\n`;
+  out += `Jami a'zolar: ${realCount}\n`;
+  out += `Bot ko'rgan: ${seen.length}\n`;
+  out += `Sana:        ${fmtDate(new Date().toISOString())}\n`;
+  out += dash + '\n';
+  out += "  FAOL A'ZOLAR RO'YXATI\n";
+  out += dash + '\n';
+  seen.forEach((m, i) => {
+    const uname = m.username ? '@' + m.username : '';
+    out += `${i + 1}.  ${m.firstName || '-'}  ${uname}  (ID: ${m.id})  — oxirgi: ${fmtDate(m.lastSeen)}\n`;
   });
-  return `👥 <b>Guruhlar</b> (${entries.length})\n\n` + lines.join('\n');
+  out += line + '\n';
+  out += "Eslatma: Bu ro'yxat bot ko'rgan faol\n";
+  out += "a'zolardan iborat, to'liq emas.\n";
+  return out;
+}
+
+// Guruh kartasini ko'rsatadi. Ko'rilgan a'zolar soniga qarab:
+//  <=30 inline; 30-100 sahifalab; >100 .txt fayl.
+async function showGroupCard(bot, adminChatId, messageId, groupId, page) {
+  const group = storage.getGroup(groupId);
+  if (!group) {
+    await bot.editMessageText('⚠️ Guruh topilmadi.', {
+      chat_id: adminChatId,
+      message_id: messageId,
+      reply_markup: backToMenuKeyboard(),
+    });
+    return;
+  }
+
+  let realCount = '?';
+  try {
+    realCount = await bot.getChatMemberCount(groupId);
+  } catch (_) {
+    /* bot guruhda bo'lmasligi mumkin */
+  }
+
+  const seen = storage.getSeenMembers(groupId);
+  const header = buildGroupCardHeader(groupId, group, realCount, seen.length);
+
+  const editText = (text, keyboard) =>
+    bot.editMessageText(text, {
+      chat_id: adminChatId,
+      message_id: messageId,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+      reply_markup: keyboard,
+    });
+
+  if (seen.length === 0) {
+    await editText(header + '\n\n👁 Hali ko\'rilgan a\'zo yo\'q.', {
+      inline_keyboard: [[{ text: '⬅️ Guruhlar', callback_data: 'admin|groups' }]],
+    });
+    return;
+  }
+
+  // >100 — .txt fayl qilib yuboramiz
+  if (seen.length > GROUP_MEMBERS_TXT_THRESHOLD) {
+    await editText(
+      header + `\n\n📄 ${seen.length} ta a'zo — ro'yxat .txt faylda yuborildi.`,
+      { inline_keyboard: [[{ text: '⬅️ Guruhlar', callback_data: 'admin|groups' }]] }
+    );
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const fileName = `guruh_${groupId}_${dateStr}.txt`;
+    const filePath = path.join(config.DOWNLOADS_DIR, fileName);
+    try {
+      if (!fs.existsSync(config.DOWNLOADS_DIR)) fs.mkdirSync(config.DOWNLOADS_DIR, { recursive: true });
+      fs.writeFileSync(filePath, buildMembersTxt(groupId, group, realCount, seen), 'utf8');
+      await bot.sendDocument(adminChatId, filePath, {}, { filename: fileName, contentType: 'text/plain' });
+    } catch (err) {
+      console.error('[group txt] xato:', err.message);
+      await bot.sendMessage(adminChatId, '❌ Faylni yuborib bo\'lmadi.');
+    } finally {
+      try {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      } catch (_) {
+        /* ignore */
+      }
+    }
+    return;
+  }
+
+  // 30 dan kam — hammasini inline; 30-100 — sahifalab (30 tadan)
+  if (seen.length <= GROUP_MEMBERS_PER_PAGE) {
+    const lines = seen.map((m, i) => memberLine(m, i + 1)).join('\n');
+    await editText(header + '\n\n' + lines, {
+      inline_keyboard: [[{ text: '⬅️ Guruhlar', callback_data: 'admin|groups' }]],
+    });
+    return;
+  }
+
+  const totalPages = Math.ceil(seen.length / GROUP_MEMBERS_PER_PAGE);
+  const p = Math.min(Math.max(0, page || 0), totalPages - 1);
+  const start = p * GROUP_MEMBERS_PER_PAGE;
+  const pageItems = seen.slice(start, start + GROUP_MEMBERS_PER_PAGE);
+  const lines = pageItems.map((m, i) => memberLine(m, start + i + 1)).join('\n');
+  await editText(header + '\n\n' + lines, groupMembersNavKeyboard(groupId, p, totalPages));
 }
 
 function buildUsersText() {
@@ -236,7 +384,19 @@ async function handleAdminCallback(bot, query) {
       break;
 
     case 'groups':
-      await editMenu(buildGroupsText(), backToMenuKeyboard());
+      await editMenu(buildGroupsText(), adminGroupsListKeyboard(storage.getGroups()));
+      break;
+
+    case 'group':
+      await showGroupCard(bot, chatId, messageId, parts[2], 0);
+      break;
+
+    case 'gmpage':
+      await showGroupCard(bot, chatId, messageId, parts[2], parseInt(parts[3], 10) || 0);
+      break;
+
+    case 'referrals':
+      await editMenu(buildReferralText(), backToMenuKeyboard());
       break;
 
     case 'limits':

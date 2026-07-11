@@ -16,6 +16,12 @@ CommonJS (`require`), hech qanday database yo'q — JSON fayl persistensiya.
   (5 tadan, ⬅️/➡️ navigatsiya), tanlab MP3; yuklash xatosida «🔄 Qayta urinish» tugmasi
 - **Broadcast** userlarga, guruhlarga yoki hammasiga (👤/👥/📢); guruhga yuborilmasa
   `left` belgilanib keyingi safar o'tkaziladi; hisobot userlar/guruhlar alohida
+- **Referral tizimi** — `/referral` shaxsiy havola (`?start=ref_<id>`), har taklif
+  uchun 1 ball; aldashdan himoya (o'zini emas, faqat yangi user, bir marta);
+  admin «🏆 Referral reyting» (top 10)
+- **Guruh faol a'zolari** — bot ko'rgan a'zolar `groups.json`da yig'iladi; admin
+  guruh kartasida real son (getChatMemberCount) + ko'rilganlar (≤30 inline,
+  30–100 sahifalab, >100 .txt fayl). *Telegram to'liq a'zolar ro'yxatini bermaydi.*
 - **Musiqa aniqlash** (Shazam kabi) — ovozli xabar yuboring, ACRCloud orqali aniqlanadi
 - **Guruh rejimi** — guruhlarda faqat havolalar uchun ishlaydi; **obuna guruhda ham**
   tekshiriladi (per-user «✅ Tekshirish» tugmasi — faqat o'sha user bosa oladi)
