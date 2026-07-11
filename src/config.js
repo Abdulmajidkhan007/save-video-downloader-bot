@@ -39,10 +39,34 @@ function parseInitialChannels(raw) {
     .map((s) => s.replace(/^@/, ''));
 }
 
+// Avto-tarqatish uchun manba kanallar (id yoki @username, vergul bilan).
+// Har birini id (raqamli) yoki username (kichik harf, @'siz) sifatida normallashtiramiz.
+function parseSourceChannels(raw) {
+  const ids = new Set();
+  const usernames = new Set();
+  if (!raw) return { ids, usernames, list: [] };
+  const list = String(raw)
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  for (const entry of list) {
+    if (/^-?\d+$/.test(entry)) {
+      ids.add(entry);
+    } else {
+      usernames.add(entry.replace(/^@/, '').toLowerCase());
+    }
+  }
+  return { ids, usernames, list };
+}
+
 const config = {
   BOT_TOKEN: process.env.BOT_TOKEN || '',
   ADMIN_IDS: parseAdminIds(process.env.ADMIN_IDS),
   INITIAL_CHANNELS: parseInitialChannels(process.env.INITIAL_CHANNELS),
+  // Avto-tarqatish manba kanallari
+  SOURCE_CHANNELS: parseSourceChannels(process.env.SOURCE_CHANNELS),
+  // Tarqatish usuli: 'copy' (default, toza) yoki 'forward' ("kanaldan" belgisi bilan)
+  FORWARD_MODE: process.env.FORWARD_MODE === 'forward' ? 'forward' : 'copy',
   DATA_DIR,
   DOWNLOADS_DIR,
   // cookies.txt yo'li (YouTube "bot emasligini tasdiqlang" xatosi uchun)
@@ -82,6 +106,8 @@ const config = {
     groups: path.join(DATA_DIR, 'groups.json'),
     urlcache: path.join(DATA_DIR, 'urlcache.json'),
     adminLog: path.join(DATA_DIR, 'admin_log.json'),
+    settings: path.join(DATA_DIR, 'settings.json'),
+    sentPosts: path.join(DATA_DIR, 'sent_posts.json'),
   },
 };
 
@@ -89,8 +115,17 @@ function acrEnabled() {
   return Boolean(config.ACR_HOST && config.ACR_ACCESS_KEY && config.ACR_ACCESS_SECRET);
 }
 
+// channel_post kelgan chat manba kanallardan biriga tegishlimi?
+function isSourceChannel(chat) {
+  if (!chat) return false;
+  const src = config.SOURCE_CHANNELS;
+  if (src.ids.has(String(chat.id))) return true;
+  if (chat.username && src.usernames.has(String(chat.username).toLowerCase())) return true;
+  return false;
+}
+
 function isAdmin(userId) {
   return config.ADMIN_IDS.includes(String(userId));
 }
 
-module.exports = { config, isAdmin, acrEnabled };
+module.exports = { config, isAdmin, acrEnabled, isSourceChannel };

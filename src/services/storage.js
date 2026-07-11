@@ -49,6 +49,9 @@ const DEFAULTS = {
     byPlatform: {},
     daily: {}, // { "2026-07-10": 12 }
   },
+  settings: {
+    autoForward: true, // avto-tarqatish yoniq/o'chiq
+  },
 };
 
 function init() {
@@ -66,6 +69,9 @@ function init() {
   }
   if (!fs.existsSync(config.FILES.stats)) {
     writeJsonAtomic(config.FILES.stats, DEFAULTS.stats);
+  }
+  if (!fs.existsSync(config.FILES.settings)) {
+    writeJsonAtomic(config.FILES.settings, DEFAULTS.settings);
   }
 
   seedInitialChannels();
@@ -494,6 +500,48 @@ function getBroadcastGroupIds() {
   return Object.keys(groups).filter((id) => !groups[id].left);
 }
 
+// ---- Settings ------------------------------------------------------------
+
+function getSettings() {
+  return readJson(config.FILES.settings, { autoForward: true });
+}
+
+function setSetting(key, value) {
+  const s = getSettings();
+  s[key] = value;
+  writeJsonAtomic(config.FILES.settings, s);
+  return s;
+}
+
+// ---- Sent posts (avto-tarqatish anti-dublikat) ---------------------------
+
+const SENT_POSTS_MAX = 2000;
+
+function getSentPosts() {
+  return readJson(config.FILES.sentPosts, {});
+}
+
+// Post allaqachon tarqatilganmi (key = "<chatId>:<messageId>").
+function isPostSent(key) {
+  const sent = getSentPosts();
+  return Boolean(sent[key]);
+}
+
+// Postni "tarqatilgan" deb belgilaydi. Ro'yxat SENT_POSTS_MAX bilan cheklanadi.
+function markPostSent(key) {
+  const sent = getSentPosts();
+  sent[key] = Date.now();
+  const keys = Object.keys(sent);
+  if (keys.length > SENT_POSTS_MAX) {
+    // eng eski yozuvlarni olib tashlaymiz
+    keys
+      .sort((a, b) => sent[a] - sent[b])
+      .slice(0, keys.length - SENT_POSTS_MAX)
+      .forEach((k) => delete sent[k]);
+  }
+  writeJsonAtomic(config.FILES.sentPosts, sent);
+}
+
 module.exports = {
   init,
   // users
@@ -533,4 +581,9 @@ module.exports = {
   recordDownload,
   recordMp3Download,
   recordMusicSearch,
+  // settings + sent posts
+  getSettings,
+  setSetting,
+  isPostSent,
+  markPostSent,
 };
