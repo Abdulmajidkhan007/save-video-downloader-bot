@@ -108,6 +108,7 @@ const config = {
     adminLog: path.join(DATA_DIR, 'admin_log.json'),
     settings: path.join(DATA_DIR, 'settings.json'),
     sentPosts: path.join(DATA_DIR, 'sent_posts.json'),
+    contactMap: path.join(DATA_DIR, 'contact_map.json'),
   },
 };
 

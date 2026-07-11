@@ -542,6 +542,34 @@ function markPostSent(key) {
   writeJsonAtomic(config.FILES.sentPosts, sent);
 }
 
+// ---- Contact map (admin javob berishi uchun) -----------------------------
+// key = "<adminChatId>:<messageId>" -> targetUserId. Admin murojaat xabariga
+// Telegram reply qilsa, qaysi userga javob ketishini shu map orqali topamiz.
+
+const CONTACT_MAP_MAX = 3000;
+
+function getContactMap() {
+  return readJson(config.FILES.contactMap, {});
+}
+
+function contactMapSet(key, userId) {
+  const map = getContactMap();
+  map[key] = { userId: String(userId), at: Date.now() };
+  const keys = Object.keys(map);
+  if (keys.length > CONTACT_MAP_MAX) {
+    keys
+      .sort((a, b) => map[a].at - map[b].at)
+      .slice(0, keys.length - CONTACT_MAP_MAX)
+      .forEach((k) => delete map[k]);
+  }
+  writeJsonAtomic(config.FILES.contactMap, map);
+}
+
+function contactMapGet(key) {
+  const map = getContactMap();
+  return map[key] ? map[key].userId : null;
+}
+
 module.exports = {
   init,
   // users
@@ -586,4 +614,7 @@ module.exports = {
   setSetting,
   isPostSent,
   markPostSent,
+  // contact map
+  contactMapSet,
+  contactMapGet,
 };
