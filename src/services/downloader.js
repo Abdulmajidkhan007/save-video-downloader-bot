@@ -291,11 +291,21 @@ async function downloadAudio(url, known = {}) {
   ];
 
   try {
-    await runYtDlp(args);
+    // Audio yuklashga aniq 120s timeout — cheksiz "yuklanmoqda" holatini oldini oladi.
+    await runYtDlp(args, { timeout: 120000 });
   } catch (err) {
     const combined = `${err.stderr || ''}\n${err.stdout || ''}\n${err.message || ''}`;
+    // yt-dlp stderr'ini to'liq log qilamiz (diagnostika uchun).
+    console.error(
+      `[downloadAudio] xato url=${url}\n  killed=${err.killed || false} signal=${err.signal || '-'}\n  STDERR: ${err.stderr || '(bo\'sh)'}`
+    );
     cleanupToken(dir, token);
     if (isBotCheck(combined)) throw new BotCheckError();
+    if (err.killed || err.signal === 'SIGTERM') {
+      const e = new Error('AUDIO_TIMEOUT');
+      e.code = 'TIMEOUT';
+      throw e;
+    }
     throw err;
   }
 
@@ -327,7 +337,7 @@ async function downloadAudio(url, known = {}) {
  * @param {number} limit
  * @returns {Promise<Array<{ title, uploader, duration, url }>>}
  */
-async function search(query, provider = 'sc', limit = 5) {
+async function search(query, provider = 'sc', limit = 15) {
   const prefix = provider === 'yt' ? 'ytsearch' : 'scsearch';
   const term = `${prefix}${limit}:${query}`;
   const args = [...commonArgs(), '--flat-playlist', '--dump-json', term];
@@ -339,18 +349,19 @@ async function search(query, provider = 'sc', limit = 5) {
     if (!t) continue;
     try {
       const j = JSON.parse(t);
-      let url = j.webpage_url || j.url || '';
-      // flat-playlist ba'zan to'liq URL bermaydi — id'dan quramiz
-      if (url && !/^https?:/i.test(url)) {
+      // Yuklab olinadigan to'g'ri URL: webpage_url ustun, keyin url/permalink.
+      // "scsearch..:query" turidagi qidiruv qatori EMAS, haqiqiy https URL kerak.
+      let url = j.webpage_url || j.url || j.permalink_url || '';
+      if (url && !/^https?:\/\//i.test(url)) {
+        // to'liq URL emas — YouTube uchun id'dan quramiz, aks holda tashlaymiz
         if (provider === 'yt' || /youtube/i.test(String(j.ie_key || ''))) {
-          url = `https://www.youtube.com/watch?v=${j.id}`;
+          url = j.id ? `https://www.youtube.com/watch?v=${j.id}` : '';
         } else {
           url = '';
         }
       }
-      if (!url && j.id && provider === 'yt') {
-        url = `https://www.youtube.com/watch?v=${j.id}`;
-      }
+      // Xavfsizlik: qidiruv-qatorini (scsearch:/ytsearch:) URL sifatida saqlamaymiz.
+      if (/^(sc|yt)search/i.test(url)) url = '';
       if (url) {
         results.push({
           title: j.title || '(nomsiz)',

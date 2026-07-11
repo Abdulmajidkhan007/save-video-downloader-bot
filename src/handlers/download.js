@@ -13,7 +13,7 @@ const { extractUrl, detectPlatform, isYouTube } = require('../utils/platform');
 const {
   youtubeFormatKeyboard,
   audioButtonKeyboard,
-  songResultsKeyboard,
+  searchPageKeyboard,
 } = require('../utils/keyboard');
 const { checkSubscription, sendSubscriptionPrompt } = require('./subscription');
 
@@ -226,16 +226,35 @@ async function sendImages(bot, chatId, origMsg, files) {
 
 // ==== AUDIO (MP3) ==========================================================
 
-async function performAudio(bot, { chatId, userId, url, meta, replyToMessageId, editStatus }) {
+async function performAudio(
+  bot,
+  { chatId, userId, url, meta, replyToMessageId, statusMessageId, retryData }
+) {
   if (activeDownloads.has(userId)) {
     await bot.sendMessage(chatId, '⏳ Oldingi yuklash tugamadi, kuting.');
     return;
   }
   activeDownloads.add(userId);
 
+  // Status matnini (va xatoda retry tugmasini) yangilaydigan yordamchi.
+  const editStatus = async (text, withRetry) => {
+    if (!statusMessageId) return;
+    const opts = { chat_id: chatId, message_id: statusMessageId };
+    if (withRetry && retryData) {
+      opts.reply_markup = {
+        inline_keyboard: [[{ text: '🔄 Qayta urinish', callback_data: retryData }]],
+      };
+    }
+    try {
+      await bot.editMessageText(text, opts);
+    } catch (_) {
+      /* ignore */
+    }
+  };
+
   let res = null;
   try {
-    if (editStatus) await editStatus('⏳ Audio yuklanmoqda...');
+    await editStatus('⏳ Audio yuklanmoqda...');
     res = await downloader.downloadAudio(url, meta || {});
     await bot.sendAudio(chatId, res.filePath, {
       caption: caption(),
@@ -249,19 +268,37 @@ async function performAudio(bot, { chatId, userId, url, meta, replyToMessageId, 
     storage.recordMp3Download();
     afterDownload('audio');
     storage.incrementUserDownloads(userId, 'audio');
+
+    // Muvaffaqiyatda status xabarini o'chiramiz
+    if (statusMessageId) {
+      try {
+        await bot.deleteMessage(chatId, statusMessageId);
+      } catch (_) {
+        /* ignore */
+      }
+    }
   } catch (err) {
     console.error('[audio] xato:', err.stderr || err.message);
-    if (editStatus) {
-      if (err instanceof downloader.TooLargeError) {
-        await editStatus(
-          `❌ Audio hajmi ${err.sizeMb}MB — Telegram orqali yuborib bo\'lmaydi ` +
-            `(limit ${downloader.MAX_MB}MB).`
-        );
-      } else if (err instanceof downloader.BotCheckError) {
-        await editStatus('❌ Manba bloklandi. Birozdan so\'ng qayta urinib ko\'ring.');
-      } else {
-        await editStatus('❌ Audioni yuklab bo\'lmadi.');
-      }
+    if (err instanceof downloader.TooLargeError) {
+      await editStatus(
+        `❌ Audio hajmi ${err.sizeMb}MB — Telegram orqali yuborib bo\'lmaydi ` +
+          `(limit ${downloader.MAX_MB}MB).`
+      );
+    } else if (err instanceof downloader.BotCheckError) {
+      await editStatus(
+        '❌ Manba bloklandi. Birozdan so\'ng qayta urinib ko\'ring.',
+        true
+      );
+    } else if (err && err.code === 'TIMEOUT') {
+      await editStatus(
+        '❌ Audio yuklash juda uzoq davom etdi (120s) va to\'xtatildi. Qayta urinib ko\'ring.',
+        true
+      );
+    } else {
+      await editStatus(
+        '❌ Audioni yuklab bo\'lmadi. Qayta urinib ko\'ring yoki boshqa natijani tanlang.',
+        true
+      );
     }
   } finally {
     if (res) downloader.removeFile(res.filePath, res.token);
@@ -410,15 +447,15 @@ async function handleTextSearch(bot, msg) {
   await runSearchAndShow(bot, { chatId, query, statusMsg, headerTitle: null });
 }
 
-// Qidiruv + natijalarni tugmalar bilan ko'rsatish (matn va ovoz uchun umumiy).
+// Qidiruv + natijalarni sahifalab ko'rsatish (matn va ovoz uchun umumiy).
 async function runSearchAndShow(bot, { chatId, query, statusMsg, headerTitle }) {
   storage.recordMusicSearch();
 
   let results = [];
   try {
-    results = await downloader.search(query, 'sc', 5); // SoundCloud — cookies talab qilmaydi
+    results = await downloader.search(query, 'sc', 15); // SoundCloud — cookies talab qilmaydi
     if (!results.length) {
-      results = await downloader.search(query, 'yt', 5); // YouTube — cookies bilan
+      results = await downloader.search(query, 'yt', 15); // YouTube — cookies bilan
     }
   } catch (err) {
     console.error('[search] xato:', err.stderr || err.message);
@@ -434,23 +471,57 @@ async function runSearchAndShow(bot, { chatId, query, statusMsg, headerTitle }) 
     return;
   }
 
+  // Har bir natijani alohida urlcache yozuvi sifatida saqlaymiz (song:<id>).
   const items = results.map((r) => {
     const id = urlcache.put(r.url, {
       title: r.title,
       uploader: r.uploader,
       duration: r.duration,
     });
-    return { id, ...r };
+    return { id, title: r.title, uploader: r.uploader, duration: r.duration };
   });
 
-  const header = headerTitle ? `🎵 ${headerTitle}\n\nBirini tanlang:` : '🎵 Natijalar — birini tanlang:';
+  // Butun qidiruv sessiyasini ham saqlaymiz — sahifalash uchun (page:<searchId>:<n>).
+  const searchId = urlcache.put('', { type: 'search', items });
+
+  const header = headerTitle
+    ? `🎵 ${headerTitle}\n\nBirini tanlang:`
+    : '🎵 Natijalar — birini tanlang:';
   await bot
     .editMessageText(header, {
       chat_id: chatId,
       message_id: statusMsg.message_id,
-      reply_markup: songResultsKeyboard(items),
+      reply_markup: searchPageKeyboard(searchId, items, 0),
     })
     .catch(() => {});
+}
+
+// Sahifalash tugmasi — callback: "page:<searchId>:<page>"
+async function handlePageCallback(bot, query) {
+  const chatId = query.message.chat.id;
+  const parts = query.data.split(':');
+  const searchId = parts[1];
+  const page = parseInt(parts[2], 10) || 0;
+
+  const entry = urlcache.get(searchId);
+  if (!entry || !entry.meta || entry.meta.type !== 'search') {
+    await bot.answerCallbackQuery(query.id, {
+      text: '⚠️ Qidiruv eskirgan. Qayta qidiring.',
+      show_alert: true,
+    });
+    return;
+  }
+  await bot.answerCallbackQuery(query.id).catch(() => {});
+
+  // Faqat klaviaturani yangilaymiz — xabar qayta yuborilmaydi.
+  try {
+    await bot.editMessageReplyMarkup(searchPageKeyboard(searchId, entry.meta.items, page), {
+      chat_id: chatId,
+      message_id: query.message.message_id,
+    });
+  } catch (_) {
+    /* "not modified" bo'lsa e'tibor bermaymiz */
+  }
 }
 
 // ==== Musiqa aniqlash (ovozli xabar) =======================================
@@ -558,21 +629,17 @@ async function handleYouTubeCallback(bot, query) {
   };
 
   if (action === 'mp3') {
-    await editStatus('⏳ Audio yuklanmoqda...');
+    // Retry uchun URL'ni urlcache'ga saqlaymiz (mp3:<id> tugmasi orqali qayta urinish).
+    const retryId = urlcache.put(pending.url, {});
     await performAudio(bot, {
       chatId,
       userId,
       url: pending.url,
       meta: {},
       replyToMessageId: statusMsg.message_id,
-      editStatus,
+      statusMessageId: statusMsg.message_id,
+      retryData: `mp3:${retryId}`,
     });
-    // audio yuborilgach tugma xabarini o'chiramiz
-    try {
-      await bot.deleteMessage(chatId, statusMsg.message_id);
-    } catch (_) {
-      /* ignore */
-    }
     return;
   }
 
@@ -609,13 +676,6 @@ async function handleMp3Callback(bot, query) {
     reply_to_message_id: query.message.message_id,
     allow_sending_without_reply: true,
   });
-  const editStatus = async (text) => {
-    try {
-      await bot.editMessageText(text, { chat_id: chatId, message_id: statusMsg.message_id });
-    } catch (_) {
-      /* ignore */
-    }
-  };
 
   await performAudio(bot, {
     chatId,
@@ -623,13 +683,9 @@ async function handleMp3Callback(bot, query) {
     url: entry.url,
     meta: entry.meta || {},
     replyToMessageId: query.message.message_id,
-    editStatus,
+    statusMessageId: statusMsg.message_id,
+    retryData: `mp3:${id}`,
   });
-  try {
-    await bot.deleteMessage(chatId, statusMsg.message_id);
-  } catch (_) {
-    /* ignore */
-  }
 }
 
 // Qidiruv natijasi tanlangan — callback: "song:<id>"
@@ -652,13 +708,6 @@ async function handleSongCallback(bot, query) {
     reply_to_message_id: query.message.message_id,
     allow_sending_without_reply: true,
   });
-  const editStatus = async (text) => {
-    try {
-      await bot.editMessageText(text, { chat_id: chatId, message_id: statusMsg.message_id });
-    } catch (_) {
-      /* ignore */
-    }
-  };
 
   await performAudio(bot, {
     chatId,
@@ -666,13 +715,9 @@ async function handleSongCallback(bot, query) {
     url: entry.url,
     meta: entry.meta || {},
     replyToMessageId: query.message.message_id,
-    editStatus,
+    statusMessageId: statusMsg.message_id,
+    retryData: `song:${id}`,
   });
-  try {
-    await bot.deleteMessage(chatId, statusMsg.message_id);
-  } catch (_) {
-    /* ignore */
-  }
 }
 
 function escapeHtml(s) {
@@ -686,5 +731,6 @@ module.exports = {
   handleYouTubeCallback,
   handleMp3Callback,
   handleSongCallback,
+  handlePageCallback,
   setBotUsername,
 };

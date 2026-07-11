@@ -28,9 +28,21 @@ const COOKIES_PATH = process.env.YTDLP_COOKIES
   ? path.resolve(process.env.YTDLP_COOKIES)
   : path.join(DATA_DIR, 'cookies.txt');
 
+// Boshlang'ich majburiy obuna kanallari (vergul bilan: @kanal1,@kanal2).
+// Faqat channels.json bo'sh/yo'q bo'lsa seed qilinadi.
+function parseInitialChannels(raw) {
+  if (!raw) return [];
+  return String(raw)
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => s.replace(/^@/, ''));
+}
+
 const config = {
   BOT_TOKEN: process.env.BOT_TOKEN || '',
   ADMIN_IDS: parseAdminIds(process.env.ADMIN_IDS),
+  INITIAL_CHANNELS: parseInitialChannels(process.env.INITIAL_CHANNELS),
   DATA_DIR,
   DOWNLOADS_DIR,
   // cookies.txt yo'li (YouTube "bot emasligini tasdiqlang" xatosi uchun)
