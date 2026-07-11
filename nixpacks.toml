@@ -1,5 +1,7 @@
+# xz — postinstall'da ffmpeg .tar.xz ni ochish uchun kerak (tar -xJf).
+# ffmpeg nix paketini ham fallback sifatida qoldiramiz.
 [phases.setup]
-nixPkgs = ["nodejs", "ffmpeg", "curl"]
+nixPkgs = ["nodejs", "ffmpeg", "curl", "xz", "gnutar"]
 
 [phases.install]
 cmds = ["npm install"]

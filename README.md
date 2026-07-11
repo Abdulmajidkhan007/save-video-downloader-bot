@@ -40,8 +40,8 @@ CommonJS (`require`), hech qanday database yo'q — JSON fayl persistensiya.
 
 - Node.js 18+
 - `yt-dlp` standalone binary (`postinstall` yuklab oladi → `bin/yt-dlp`)
-- `gallery-dl` standalone binary (`postinstall` yuklab oladi → `bin/gallery-dl`)
-- `ffmpeg` (MP3 konvertatsiya + musiqa aniqlashda audio kesish uchun)
+- `gallery-dl` standalone binary (`postinstall`, Codeberg'dan → `bin/gallery-dl`)
+- `ffmpeg` + `ffprobe` statik binary (`postinstall` yuklab oladi → `bin/ffmpeg`, `bin/ffprobe`)
 
 ## ⚙️ Sozlash
 
@@ -64,7 +64,7 @@ cp .env.example .env
 | `YTDLP_COOKIES`     | Opsional: cookies.txt yo'li (default `DATA_DIR/cookies.txt`) |
 | `YTDLP_PATH`        | Opsional: yt-dlp binary (default `./bin/yt-dlp`)        |
 | `GALLERY_DL_PATH`   | Opsional: gallery-dl binary (default `./bin/gallery-dl`) |
-| `FFMPEG_PATH`       | Opsional: ffmpeg binary (default `ffmpeg`)              |
+| `FFMPEG_PATH`       | Opsional: ffmpeg binary (default `./bin/ffmpeg`)        |
 | `ACR_HOST`          | Opsional: ACRCloud host (musiqa aniqlash)               |
 | `ACR_ACCESS_KEY`    | Opsional: ACRCloud access key                           |
 | `ACR_ACCESS_SECRET` | Opsional: ACRCloud access secret                        |
@@ -86,10 +86,11 @@ npm install && cp -n .env.example .env && node src/bot.js
 2. Railway'da **New Project → Deploy from GitHub repo** ni tanlang.
 3. **Volume qo'shing**: Service → *Volumes* → *New Volume*, mount path: `/app/data`.
 4. **Environment o'zgaruvchilarini** kiriting (Variables bo'limi — pastdagi ro'yxatga qarang).
-5. `nixpacks.toml` `nodejs`, `ffmpeg`, `curl` ni o'rnatadi (python kerak emas).
-   `npm install` esa `postinstall` orqali **yt-dlp** (`yt-dlp_linux`) va
-   **gallery-dl** (`gallery-dl.bin`) standalone binary'larini `bin/` ga yuklaydi.
-   Bot ishga tushganda diagnostika + `--version` loglari chiqadi.
+5. `nixpacks.toml` `nodejs`, `curl` ni o'rnatadi. `npm install` esa `postinstall`
+   orqali **yt-dlp** (`yt-dlp_linux`), **gallery-dl** (Codeberg'dan) va statik
+   **ffmpeg/ffprobe** binary'larini `bin/` ga yuklaydi. Barcha `curl`'lar `-f`
+   bilan — 404 bo'lsa build to'xtaydi (buzuq fayl yozilmaydi). Bot ishga
+   tushganda diagnostika + `--version` loglari chiqadi.
 6. Deploy tugagach bot polling rejimida ishga tushadi.
 
 ### Railway env o'zgaruvchilari ro'yxati

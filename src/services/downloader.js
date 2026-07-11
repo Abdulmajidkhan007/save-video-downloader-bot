@@ -76,6 +76,11 @@ function commonArgs() {
     '--no-progress',
     '--restrict-filenames',
   ];
+  // ffmpeg'ni aniq ko'rsatamiz — konvertatsiya/merge bin/ffmpeg orqali ishlaydi
+  // (nixpacks runtime PATH'ida ffmpeg bo'lmasligi mumkin).
+  if (config.FFMPEG_PATH) {
+    args.push('--ffmpeg-location', config.FFMPEG_PATH);
+  }
   if (config.YTDLP_COOKIES && fs.existsSync(config.YTDLP_COOKIES)) {
     args.push('--cookies', config.YTDLP_COOKIES);
   }
