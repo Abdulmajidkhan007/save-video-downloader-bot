@@ -152,6 +152,10 @@ function upsertUser(from, source) {
       joinedAt: now,
       downloads: 0,
       downloadsByPlatform: {},
+      // Referral maydonlari
+      referredBy: null, // kim taklif qilgan (bir marta yoziladi)
+      referrals: 0, // nechta odam taklif qilgan
+      points: 0, // referral ballari
       lastActive: now,
     };
   }
@@ -244,6 +248,54 @@ function getRecentUsers(limit = 10) {
     .map(([id, u]) => ({ id, ...u }))
     .sort((a, b) => new Date(b.joinedAt) - new Date(a.joinedAt))
     .slice(0, limit);
+}
+
+// ---- Referral ------------------------------------------------------------
+
+// Referralni qo'llaydi (atomik). Aldashning oldini olish shartlari shu yerda
+// qat'iy tekshiriladi:
+//  - referrer o'zini taklif qila olmaydi
+//  - referrer bazada mavjud bo'lishi kerak
+//  - yangi user bazada bo'lishi kerak
+//  - yangi user avval kimgadir referral bo'lmagan bo'lishi kerak (referredBy bo'sh)
+// Muvaffaqiyatda referrer'ga +1 ball/referral, yangi user'ga referredBy yoziladi.
+function applyReferral(referrerId, newUserId) {
+  const rid = String(referrerId);
+  const nid = String(newUserId);
+  if (rid === nid) return { ok: false, reason: 'self' };
+
+  const users = getUsers();
+  if (!users[rid]) return { ok: false, reason: 'no_referrer' };
+  if (!users[nid]) return { ok: false, reason: 'no_newuser' };
+  if (users[nid].referredBy) return { ok: false, reason: 'already' };
+
+  users[nid].referredBy = rid;
+  users[rid].referrals = (users[rid].referrals || 0) + 1;
+  users[rid].points = (users[rid].points || 0) + 1;
+  saveUsers(users);
+
+  return {
+    ok: true,
+    referrerPoints: users[rid].points,
+    referrerReferrals: users[rid].referrals,
+    referrer: { id: rid, ...users[rid] },
+  };
+}
+
+// Top N referrer (points bo'yicha, faqat points>0).
+function getReferralLeaderboard(limit = 10) {
+  const users = getUsers();
+  return Object.entries(users)
+    .map(([id, u]) => ({ id, ...u }))
+    .filter((u) => (u.points || 0) > 0)
+    .sort((a, b) => (b.points || 0) - (a.points || 0))
+    .slice(0, limit);
+}
+
+// Referral orqali kelgan (referredBy to'ldirilgan) foydalanuvchilar soni.
+function getReferredCount() {
+  const users = getUsers();
+  return Object.values(users).filter((u) => u.referredBy).length;
 }
 
 // ---- Channels ------------------------------------------------------------
@@ -355,8 +407,58 @@ function addGroup(chat, addedBy, membersCount) {
       : (prev && prev.addedByName) || '',
     membersCount: membersCount || (prev && prev.membersCount) || 0,
     addedAt: prev ? prev.addedAt : new Date().toISOString(),
+    // Ko'rilgan faol a'zolar re-add'da ham saqlanadi
+    seenMembers: (prev && prev.seenMembers) || [],
   };
   saveGroups(groups);
+}
+
+// Guruhda ko'rilgan (faol) a'zoni qayd qiladi.
+// MUHIM: Telegram Bot API guruh a'zolarining TO'LIQ ro'yxatini bermaydi —
+// faqat getChatMemberCount (son) mavjud. Shuning uchun bot faqat O'ZI KO'RGAN
+// (yozgan yoki qo'shilgan) a'zolarni yig'adi. Bu "faol a'zolar", to'liq emas.
+function recordSeenMember(chat, from) {
+  if (!from || from.is_bot) return; // botlarni yozmaymiz
+  const groups = getGroups();
+  const id = String(chat.id);
+  if (!groups[id]) {
+    groups[id] = {
+      title: chat.title || '',
+      addedBy: '',
+      addedByName: '',
+      membersCount: 0,
+      addedAt: new Date().toISOString(),
+      seenMembers: [],
+    };
+  }
+  if (!Array.isArray(groups[id].seenMembers)) groups[id].seenMembers = [];
+
+  const now = new Date().toISOString();
+  const uid = String(from.id);
+  const existing = groups[id].seenMembers.find((m) => String(m.id) === uid);
+  if (existing) {
+    existing.lastSeen = now;
+    if (from.first_name) existing.firstName = from.first_name;
+    if (from.username) existing.username = from.username;
+  } else {
+    groups[id].seenMembers.push({
+      id: uid,
+      firstName: from.first_name || '',
+      username: from.username || '',
+      lastSeen: now,
+    });
+  }
+  saveGroups(groups);
+}
+
+function getGroup(chatId) {
+  const groups = getGroups();
+  return groups[String(chatId)] || null;
+}
+
+function getSeenMembers(chatId) {
+  const g = getGroup(chatId);
+  return (g && Array.isArray(g.seenMembers) && g.seenMembers) || [];
 }
 
 function removeGroup(chatId) {
@@ -408,17 +510,24 @@ module.exports = {
   getUserCount,
   getActiveTodayCount,
   getRecentUsers,
+  // referral
+  applyReferral,
+  getReferralLeaderboard,
+  getReferredCount,
   // channels
   getChannels,
   addChannel,
   removeChannel,
   // groups
   getGroups,
+  getGroup,
   addGroup,
   removeGroup,
   markGroupLeft,
   getGroupCount,
   getBroadcastGroupIds,
+  recordSeenMember,
+  getSeenMembers,
   // stats
   getStats,
   recordDownload,

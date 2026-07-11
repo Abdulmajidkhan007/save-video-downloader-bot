@@ -117,6 +117,7 @@ async function setupCommands() {
     await bot.setMyCommands([
       { command: 'start', description: 'Botni ishga tushirish' },
       { command: 'stats', description: 'Shaxsiy statistikangiz' },
+      { command: 'referral', description: 'Do\'st taklif qilish (ball to\'plash)' },
       { command: 'help', description: 'Yordam va platformalar' },
       { command: 'admin', description: 'Admin panel (faqat adminlar)' },
     ]);
@@ -165,6 +166,10 @@ bot.onText(/^\/stats\b/, (msg) => {
   wrap(() => handleUserStats(bot, msg), msg);
 });
 
+bot.onText(/^\/referral\b/, (msg) => {
+  wrap(() => start.handleReferral(bot, msg), msg);
+});
+
 bot.onText(/^\/admin\b/, (msg) => {
   wrap(() => admin.handleAdminCommand(bot, msg), msg);
 });
@@ -176,13 +181,28 @@ function isGroupChat(msg) {
 }
 
 bot.on('message', (msg) => {
+  if (!msg.chat) return;
+  const group = isGroupChat(msg);
+
+  // Guruh faol a'zolarini yig'amiz — bot ko'rgan (yozgan/qo'shilgan) a'zolar.
+  // (Telegram to'liq a'zolar ro'yxatini bermaydi; bu faqat faol a'zolar.)
+  if (group) {
+    try {
+      if (Array.isArray(msg.new_chat_members)) {
+        for (const m of msg.new_chat_members) storage.recordSeenMember(msg.chat, m);
+      } else if (msg.from) {
+        storage.recordSeenMember(msg.chat, msg.from);
+      }
+    } catch (err) {
+      console.error('[seenMembers] xato:', err.message);
+    }
+  }
+
   // Buyruqlarni bu yerda o'tkazib yuboramiz (onText allaqachon ushlagan)
   if (msg.text && /^\//.test(msg.text)) return;
   if (!msg.from) return;
   // Xizmat xabarlari (a'zo qo'shildi/chiqdi va h.k.) — e'tibor bermaymiz
   if (msg.new_chat_members || msg.left_chat_member || msg.group_chat_created) return;
-
-  const group = isGroupChat(msg);
 
   wrap(
     async () => {
