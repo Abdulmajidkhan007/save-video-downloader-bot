@@ -32,8 +32,9 @@ function subscriptionKeyboard(channels, userId) {
   return { inline_keyboard: rows };
 }
 
-// Admin panel asosiy menyusi.
-function adminMenuKeyboard() {
+// Admin panel asosiy menyusi. autoForward — avto-tarqatish holati.
+function adminMenuKeyboard(autoForward) {
+  const afLabel = `📡 Avto-tarqatish: ${autoForward ? '✅ Yoniq' : '❌ O\'chiq'}`;
   return {
     inline_keyboard: [
       [
@@ -53,6 +54,7 @@ function adminMenuKeyboard() {
         { text: '🧾 Loglar', callback_data: 'admin|logs' },
       ],
       [{ text: '🏆 Referral reyting', callback_data: 'admin|referrals' }],
+      [{ text: afLabel, callback_data: 'admin|autofwd' }],
     ],
   };
 }

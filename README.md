@@ -22,6 +22,10 @@ CommonJS (`require`), hech qanday database yo'q — JSON fayl persistensiya.
 - **Guruh faol a'zolari** — bot ko'rgan a'zolar `groups.json`da yig'iladi; admin
   guruh kartasida real son (getChatMemberCount) + ko'rilganlar (≤30 inline,
   30–100 sahifalab, >100 .txt fayl). *Telegram to'liq a'zolar ro'yxatini bermaydi.*
+- **Avto-tarqatish** — `SOURCE_CHANNELS` kanal(lar)iga kelgan post avtomatik barcha
+  private userlar + faol guruhlarga tarqaladi (`copy`/`forward`); broadcast bilan bir
+  xil xavfsizlik (rate limit, bloklagan→blocked, chiqarilgan guruh→left), anti-dublikat
+  (`sent_posts.json`), admin panelda «📡 Avto-tarqatish» toggle
 - **Musiqa aniqlash** (Shazam kabi) — ovozli xabar yuboring, ACRCloud orqali aniqlanadi
 - **Guruh rejimi** — guruhlarda faqat havolalar uchun ishlaydi; **obuna guruhda ham**
   tekshiriladi (per-user «✅ Tekshirish» tugmasi — faqat o'sha user bosa oladi)
@@ -64,6 +68,8 @@ cp .env.example .env
 | `BOT_TOKEN`         | @BotFather dan olingan token (**majburiy**)             |
 | `ADMIN_IDS`         | Admin ID lari, vergul bilan: `123,456` (**majburiy**)   |
 | `INITIAL_CHANNELS`  | Opsional: boshlang'ich obuna kanallari `@a,@b` (faqat channels.json bo'sh bo'lsa seed) |
+| `SOURCE_CHANNELS`   | Opsional: avto-tarqatish manba kanallari `@a,-1001234` (bot ADMIN bo'lishi shart) |
+| `FORWARD_MODE`      | Opsional: `copy` (default) yoki `forward`               |
 | `DATA_DIR`          | JSON papka (lokal `./data`, Railway `/app/data`)        |
 | `DOWNLOADS_DIR`     | Vaqtinchalik fayllar papkasi (default `./downloads`)    |
 | `YTDLP_COOKIES_B64` | Opsional: `cookies.txt` base64 ko'rinishi (YouTube fix) |
@@ -148,6 +154,7 @@ src/
 │   ├── notify.js          # notifyAdmins
 │   ├── ratelimit.js       # rate limiting + anti-flood (xotirada)
 │   ├── adminlog.js        # admin harakatlari logi (admin_log.json)
+│   ├── autoforward.js     # kanal postini avto-tarqatish (channel_post)
 │   └── broadcast.js       # ommaviy xabar (private-only, blocked belgisi)
 └── utils/
     ├── platform.js        # URL → platforma (whitelist regex)
@@ -164,6 +171,9 @@ src/
 - Majburiy obuna ishlashi uchun bot har bir kanalda **admin** bo'lishi shart.
 - Guruhda bot faqat qo'llab-quvvatlanadigan havolalarga javob beradi; obuna
   tekshirilmaydi. Guruh xabarlarini ko'rish uchun BotFather'da privacy o'chirilsin.
+- **Avto-tarqatish** ishlashi uchun bot `SOURCE_CHANNELS` dagi har bir kanalga
+  **admin** qilib qo'shilishi kerak — bu BotFather'dan emas, **kanal sozlamasidan**
+  qo'lda qilinadi. Aks holda Telegram botga `channel_post` yubormaydi.
 
 ## 🛣 2-bosqich (reja) — 50MB+ fayllar uchun Local Bot API Server
 

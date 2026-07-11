@@ -9,6 +9,7 @@ const storage = require('./services/storage');
 const downloader = require('./services/downloader');
 const urlcache = require('./services/urlcache');
 const notify = require('./services/notify');
+const autoforward = require('./services/autoforward');
 
 const start = require('./handlers/start');
 const { handleStart, handleHelp, handleUserStats } = start;
@@ -245,6 +246,13 @@ bot.on('message', (msg) => {
     msg,
     group
   );
+});
+
+// ---- Kanal postlari (avto-tarqatish) ------------------------------------
+
+bot.on('channel_post', (post) => {
+  // Manba kanaldan kelgan post barcha private user va guruhlarga tarqatiladi.
+  wrap(() => autoforward.handleChannelPost(bot, post), null, true);
 });
 
 // ---- Callback query'lar --------------------------------------------------

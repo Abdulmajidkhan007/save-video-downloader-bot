@@ -60,7 +60,7 @@ async function handleAdminCommand(bot, msg) {
   }
   await bot.sendMessage(msg.chat.id, '🛠 <b>Admin panel</b>', {
     parse_mode: 'HTML',
-    reply_markup: adminMenuKeyboard(),
+    reply_markup: adminMenuKeyboard(storage.getSettings().autoForward),
   });
 }
 
@@ -372,8 +372,23 @@ async function handleAdminCallback(bot, query) {
   switch (action) {
     case 'menu':
       adminState.delete(String(userId));
-      await editMenu('🛠 <b>Admin panel</b>', adminMenuKeyboard());
+      await editMenu('🛠 <b>Admin panel</b>', adminMenuKeyboard(storage.getSettings().autoForward));
       break;
+
+    case 'autofwd': {
+      const next = !storage.getSettings().autoForward;
+      storage.setSetting('autoForward', next);
+      adminlog.log(
+        'autoforward_toggle',
+        adminInfo(query.from),
+        `avto-tarqatish: ${next ? 'yoniq' : "o'chiq"}`
+      );
+      await editMenu(
+        `🛠 <b>Admin panel</b>\n\n📡 Avto-tarqatish ${next ? 'yoqildi ✅' : "o'chirildi ❌"}`,
+        adminMenuKeyboard(next)
+      );
+      break;
+    }
 
     case 'stats':
       await editMenu(buildStatsText(), backToMenuKeyboard());
