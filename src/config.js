@@ -55,8 +55,9 @@ const config = {
   // gallery-dl binary yo'li (rasm yuklash uchun)
   GALLERY_DL_PATH:
     process.env.GALLERY_DL_PATH || path.join(__dirname, '..', 'bin', 'gallery-dl'),
-  // ffmpeg binary (musiqa aniqlash uchun audio kesishda ishlatiladi)
-  FFMPEG_PATH: process.env.FFMPEG_PATH || 'ffmpeg',
+  // ffmpeg binary — postinstall statik binary bin/ffmpeg ga yuklaydi.
+  // yt-dlp konvertatsiya/merge, ACRCloud audio kesish shu yo'ldan foydalanadi.
+  FFMPEG_PATH: process.env.FFMPEG_PATH || path.join(__dirname, '..', 'bin', 'ffmpeg'),
 
   // ACRCloud (Shazam kabi musiqa aniqlash). Bo'sh bo'lsa funksiya o'chiq.
   ACR_HOST: process.env.ACR_HOST || '',

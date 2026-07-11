@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/bot.js",
     "dev": "node src/bot.js",
-    "postinstall": "mkdir -p bin && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o bin/yt-dlp && chmod +x bin/yt-dlp && curl -L https://github.com/mikf/gallery-dl/releases/latest/download/gallery-dl.bin -o bin/gallery-dl && chmod +x bin/gallery-dl"
+    "postinstall": "mkdir -p bin && curl -fL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o bin/yt-dlp && chmod +x bin/yt-dlp && curl -fL https://codeberg.org/mikf/gallery-dl/releases/download/v1.32.5/gallery-dl.bin -o bin/gallery-dl && chmod +x bin/gallery-dl && curl -fL https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o /tmp/ff.tar.xz && tar -xJf /tmp/ff.tar.xz -C /tmp && cp /tmp/ffmpeg-*-amd64-static/ffmpeg bin/ffmpeg && cp /tmp/ffmpeg-*-amd64-static/ffprobe bin/ffprobe && chmod +x bin/ffmpeg bin/ffprobe"
   },
   "engines": {
     "node": ">=18"
