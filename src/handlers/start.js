@@ -106,6 +106,8 @@ async function handleHelp(bot, msg) {
     '<b>Buyruqlar:</b>\n' +
     '/start — botni ishga tushirish\n' +
     '/stats — shaxsiy statistikangiz\n' +
+    '/referral — do\'st taklif qilish\n' +
+    '/boglanish — admin bilan bog\'lanish\n' +
     '/help — ushbu yordam\n\n' +
     'ℹ️ YouTube uchun video yoki MP3 (audio) tanlash mumkin.\n' +
     'ℹ️ Fayl hajmi 50MB dan oshsa, Telegram orqali yuborib bo\'lmaydi.';

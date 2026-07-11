@@ -55,7 +55,16 @@ async function handleAdminCommand(bot, msg) {
         `${msg.from.username ? '@' + escapeHtml(msg.from.username) : ''}\n` +
         `🆔 <code>${msg.from.id}</code>`
     );
-    await bot.sendMessage(msg.chat.id, '⛔️ Bu buyruq faqat adminlar uchun.');
+    await bot.sendMessage(
+      msg.chat.id,
+      '⚠️ Bu komanda faqat adminlar uchun.\n\n' +
+        '💬 Admin bilan bog\'lanmoqchimisiz? /boglanish komandasidan foydalaning.',
+      {
+        reply_markup: {
+          inline_keyboard: [[{ text: '💬 Bog\'lanish', callback_data: 'contact_start' }]],
+        },
+      }
+    );
     return;
   }
   await bot.sendMessage(msg.chat.id, '🛠 <b>Admin panel</b>', {

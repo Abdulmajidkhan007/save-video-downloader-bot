@@ -15,6 +15,7 @@ const start = require('./handlers/start');
 const { handleStart, handleHelp, handleUserStats } = start;
 const download = require('./handlers/download');
 const admin = require('./handlers/admin');
+const contact = require('./handlers/contact');
 const { checkSubscription, sendSubscriptionPrompt } = require('./handlers/subscription');
 
 // ---- Boshlang'ich tekshiruvlar ------------------------------------------
@@ -119,6 +120,7 @@ async function setupCommands() {
       { command: 'start', description: 'Botni ishga tushirish' },
       { command: 'stats', description: 'Shaxsiy statistikangiz' },
       { command: 'referral', description: 'Do\'st taklif qilish (ball to\'plash)' },
+      { command: 'boglanish', description: 'Admin bilan bog\'lanish' },
       { command: 'help', description: 'Yordam va platformalar' },
       { command: 'admin', description: 'Admin panel (faqat adminlar)' },
     ]);
@@ -169,6 +171,20 @@ bot.onText(/^\/stats\b/, (msg) => {
 
 bot.onText(/^\/referral\b/, (msg) => {
   wrap(() => start.handleReferral(bot, msg), msg);
+});
+
+bot.onText(/^\/boglanish\b/, (msg) => {
+  if (isGroupChat(msg)) return; // faqat shaxsiy chatda
+  wrap(() => contact.startContact(bot, msg.chat.id, msg.from.id), msg);
+});
+
+bot.onText(/^\/bekor\b/, (msg) => {
+  if (isGroupChat(msg)) return;
+  wrap(async () => {
+    // Admin javob rejimida bo'lsa — o'sha bekor qilinadi, aks holda user rejimi
+    if (await contact.handleAdminMessage(bot, msg)) return;
+    await contact.cancelContact(bot, msg);
+  }, msg);
 });
 
 bot.onText(/^\/admin\b/, (msg) => {
@@ -223,6 +239,18 @@ bot.on('message', (msg) => {
             `🆔 <code>${msg.from.id}</code>\n` +
             `👥 Jami: ${storage.getUserCount()}`
         );
+      }
+
+      // Admin javob rejimida yoki murojaat xabariga reply qilgan bo'lsa — userga yetkazamiz
+      if (contact.adminHasContactContext(msg)) {
+        const relayed = await contact.handleAdminMessage(bot, msg);
+        if (relayed) return;
+      }
+
+      // User bog'lanish rejimida bo'lsa — xabarini adminlarga yetkazamiz
+      if (contact.isUserInContact(msg.from.id)) {
+        await contact.relayUserMessage(bot, msg);
+        return;
       }
 
       // Admin biror qadam kutayotgan bo'lsa — o'sha ushlaydi
@@ -296,6 +324,13 @@ function validateCallback(data) {
     if (!/^\d{1,3}$/.test(parts[2])) return null;
     return { kind: 'page' };
   }
+  if (data.startsWith('reply:')) {
+    // reply:<userId> — admin murojaatga javob berish
+    const parts = data.split(':');
+    if (parts.length !== 2 || !/^\d{1,20}$/.test(parts[1])) return null;
+    return { kind: 'reply', userId: parts[1] };
+  }
+  if (data === 'contact_start') return { kind: 'contact_start' };
   if (data === 'noop') return { kind: 'noop' };
   return null;
 }
@@ -331,6 +366,13 @@ bot.on('callback_query', (query) => {
         return;
       case 'check_sub':
         await handleCheckSubscription(bot, query, v.userId);
+        return;
+      case 'reply':
+        await contact.handleReplyCallback(bot, query, v.userId);
+        return;
+      case 'contact_start':
+        await bot.answerCallbackQuery(query.id).catch(() => {});
+        await contact.startContact(bot, query.message.chat.id, query.from.id);
         return;
       default:
         await bot.answerCallbackQuery(query.id).catch(() => {});

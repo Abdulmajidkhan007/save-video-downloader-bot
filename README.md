@@ -26,6 +26,11 @@ CommonJS (`require`), hech qanday database yo'q — JSON fayl persistensiya.
   private userlar + faol guruhlarga tarqaladi (`copy`/`forward`); broadcast bilan bir
   xil xavfsizlik (rate limit, bloklagan→blocked, chiqarilgan guruh→left), anti-dublikat
   (`sent_posts.json`), admin panelda «📡 Avto-tarqatish» toggle
+- **Admin bilan bog'lanish** — `/boglanish` bilan user xabari adminlarga yetadi
+  («💬 Javob berish» tugmasi bilan); admin tugma orqali yoki xabarga to'g'ridan-to'g'ri
+  reply qilib javob beradi (`contact_map.json`); user spam limiti 3/daqiqa; oddiy user
+  `/admin` bossa «💬 Bog'lanish» tugmasi ko'rsatiladi (ruxsatsiz urinish baribir
+  adminga bildiriladi)
 - **Musiqa aniqlash** (Shazam kabi) — ovozli xabar yuboring, ACRCloud orqali aniqlanadi
 - **Guruh rejimi** — guruhlarda faqat havolalar uchun ishlaydi; **obuna guruhda ham**
   tekshiriladi (per-user «✅ Tekshirish» tugmasi — faqat o'sha user bosa oladi)
@@ -141,9 +146,10 @@ src/
 ├── bot.js                 # entry point, routing, cookies, notify, my_chat_member
 ├── config.js              # .env, konstantalar
 ├── handlers/
-│   ├── start.js           # /start (+guruhga qo'shish), /help, /stats
+│   ├── start.js           # /start (+referral, guruhga qo'shish), /help, /stats, /referral
 │   ├── download.js        # URL/qidiruv/ovoz → video/rasm/MP3 oqimlari
 │   ├── admin.js           # admin panel (state machine)
+│   ├── contact.js         # /boglanish — ikki tomonlama admin↔user aloqa
 │   └── subscription.js    # majburiy obuna tekshiruvi
 ├── services/
 │   ├── downloader.js      # yt-dlp + gallery-dl wrapper, MP3, qidiruv, 50MB
