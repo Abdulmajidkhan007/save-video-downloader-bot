@@ -24,31 +24,46 @@ function isBlockedError(err) {
   );
 }
 
-// Ommaviy xabar yuborish — FAQAT 'private' va bloklanmagan foydalanuvchilarga.
-// mode: 'copy' (nusxa) yoki 'forward' (forward).
-// source: { chatId, messageId } — asl xabar.
-// onProgress(done, total) — davomiylik uchun callback (opsional).
-async function runBroadcast(bot, { mode, source, onProgress }) {
-  const userIds = storage.getPrivateUserIds();
-  const total = userIds.length;
-
-  let sent = 0;
-  let blocked = 0; // bot bloklangan/yetib bo'lmaydigan foydalanuvchilar
-  let failed = 0; // boshqa xatolar
+// Ommaviy xabar yuborish.
+// mode: 'copy' | 'forward'; target: 'users' | 'groups' | 'all'.
+// Foydalanuvchilar: faqat 'private' va bloklanmaganlar.
+// Guruhlar: faqat 'left' bo'lmaganlar; xato bersa left=true belgilanadi.
+async function runBroadcast(bot, { mode, target = 'users', source, onProgress }) {
   const delayMs = Math.ceil(1000 / config.BROADCAST_RATE_PER_SEC);
 
-  const sendOne = (uid) =>
+  const sendOne = (chatId) =>
     mode === 'forward'
-      ? bot.forwardMessage(uid, source.chatId, source.messageId)
-      : bot.copyMessage(uid, source.chatId, source.messageId);
+      ? bot.forwardMessage(chatId, source.chatId, source.messageId)
+      : bot.copyMessage(chatId, source.chatId, source.messageId);
 
-  for (let i = 0; i < userIds.length; i += 1) {
-    const uid = userIds[i];
+  const userIds = target === 'users' || target === 'all' ? storage.getPrivateUserIds() : [];
+  const groupIds =
+    target === 'groups' || target === 'all' ? storage.getBroadcastGroupIds() : [];
+
+  const grandTotal = userIds.length + groupIds.length;
+  let done = 0;
+
+  const res = {
+    userTotal: userIds.length,
+    userSent: 0,
+    userBlocked: 0,
+    userFailed: 0,
+    groupTotal: groupIds.length,
+    groupSent: 0,
+    groupFailed: 0,
+  };
+
+  const bump = async () => {
+    done += 1;
+    if (onProgress && done % 25 === 0) await onProgress(done, grandTotal);
+  };
+
+  // ---- Foydalanuvchilar ----
+  for (const uid of userIds) {
     try {
       await sendOne(uid);
-      sent += 1;
+      res.userSent += 1;
     } catch (err) {
-      // 429 — rate limit: retry_after kutib qayta urinamiz
       const retryAfter =
         err && err.response && err.response.body && err.response.body.parameters
           ? err.response.body.parameters.retry_after
@@ -57,32 +72,56 @@ async function runBroadcast(bot, { mode, source, onProgress }) {
         await sleep((retryAfter + 1) * 1000);
         try {
           await sendOne(uid);
-          sent += 1;
+          res.userSent += 1;
         } catch (err2) {
           if (isBlockedError(err2)) {
-            blocked += 1;
+            res.userBlocked += 1;
             storage.setUserBlocked(uid, true);
           } else {
-            failed += 1;
+            res.userFailed += 1;
           }
         }
       } else if (isBlockedError(err)) {
-        // Bot bloklangan — belgilaymiz, keyingi broadcastlarda o'tkazib yuboramiz
-        blocked += 1;
+        res.userBlocked += 1;
         storage.setUserBlocked(uid, true);
       } else {
-        failed += 1;
+        res.userFailed += 1;
       }
     }
-
-    if (onProgress && (i + 1) % 25 === 0) {
-      await onProgress(sent + blocked + failed, total);
-    }
-
+    await bump();
     await sleep(delayMs);
   }
 
-  return { total, sent, blocked, failed };
+  // ---- Guruhlar ----
+  for (const gid of groupIds) {
+    try {
+      await sendOne(gid);
+      res.groupSent += 1;
+    } catch (err) {
+      const retryAfter =
+        err && err.response && err.response.body && err.response.body.parameters
+          ? err.response.body.parameters.retry_after
+          : null;
+      if (retryAfter) {
+        await sleep((retryAfter + 1) * 1000);
+        try {
+          await sendOne(gid);
+          res.groupSent += 1;
+        } catch (err2) {
+          res.groupFailed += 1;
+          storage.markGroupLeft(gid);
+        }
+      } else {
+        // Guruhga yuborib bo'lmadi (bot chiqarilgan/xato) — left=true belgilaymiz.
+        res.groupFailed += 1;
+        storage.markGroupLeft(gid);
+      }
+    }
+    await bump();
+    await sleep(delayMs);
+  }
+
+  return res;
 }
 
 module.exports = { runBroadcast };

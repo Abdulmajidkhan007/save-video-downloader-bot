@@ -14,7 +14,10 @@ function ensureDir(dir) {
 
 // Atomik yozish: avval .tmp faylga yozamiz, keyin rename qilamiz.
 // Bu yozish jarayonida crash bo'lsa fayl buzilmasligini kafolatlaydi.
+// Har yozishdan oldin DATA_DIR (va maqsad papka) mavjudligini kafolatlaymiz —
+// Railway volume qayta ulanib papka yo'qolsa ham yozish ishlashi uchun.
 function writeJsonAtomic(filePath, data) {
+  ensureDir(config.DATA_DIR);
   ensureDir(path.dirname(filePath));
   const tmp = `${filePath}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
@@ -64,6 +67,29 @@ function init() {
   if (!fs.existsSync(config.FILES.stats)) {
     writeJsonAtomic(config.FILES.stats, DEFAULTS.stats);
   }
+
+  seedInitialChannels();
+}
+
+// INITIAL_CHANNELS env'dan majburiy obuna kanallarini seed qiladi.
+// FAQAT channels.json bo'sh yoki yo'q bo'lsa — mavjud ma'lumot ustidan yozilmaydi.
+function seedInitialChannels() {
+  const initial = config.INITIAL_CHANNELS || [];
+  if (!initial.length) return;
+  const current = getChannels();
+  if (current.length > 0) return; // mavjud kanallar bor — tegmaymiz
+
+  const seeded = initial.map((username) => ({
+    id: `@${username}`,
+    title: '',
+    username,
+    addedAt: new Date().toISOString(),
+  }));
+  saveChannels(seeded);
+  console.log(
+    `✅ INITIAL_CHANNELS seed qilindi (${seeded.length} ta): ` +
+      seeded.map((c) => '@' + c.username).join(', ')
+  );
 }
 
 // ---- Users ---------------------------------------------------------------
@@ -344,8 +370,26 @@ function removeGroup(chatId) {
   return false;
 }
 
+// Broadcast paytida guruhga yuborib bo'lmasa (bot chiqarilgan/xato) — left=true.
+// Yozuv o'chirilmaydi, faqat belgilanadi; keyingi broadcastlarda o'tkaziladi.
+function markGroupLeft(chatId) {
+  const groups = getGroups();
+  const id = String(chatId);
+  if (groups[id]) {
+    groups[id].left = true;
+    saveGroups(groups);
+  }
+}
+
 function getGroupCount() {
-  return Object.keys(getGroups()).length;
+  // Faol (chiqarilmagan) guruhlar soni
+  return Object.values(getGroups()).filter((g) => !g.left).length;
+}
+
+// Broadcast uchun: faol (left bo'lmagan) guruh ID lari.
+function getBroadcastGroupIds() {
+  const groups = getGroups();
+  return Object.keys(groups).filter((id) => !groups[id].left);
 }
 
 module.exports = {
@@ -372,7 +416,9 @@ module.exports = {
   getGroups,
   addGroup,
   removeGroup,
+  markGroupLeft,
   getGroupCount,
+  getBroadcastGroupIds,
   // stats
   getStats,
   recordDownload,

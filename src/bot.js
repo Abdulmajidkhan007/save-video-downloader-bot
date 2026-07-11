@@ -63,8 +63,8 @@ function logYtDlpDiagnostics() {
 }
 
 // Binary'lar mavjud va ishlayotganini tekshiramiz (execFile — shell'siz).
-function checkBinary(name, binPath, notifyOnFail) {
-  execFile(binPath, ['--version'], { timeout: 15000 }, (err, stdout) => {
+function checkBinary(name, binPath, notifyOnFail, versionArgs) {
+  execFile(binPath, versionArgs || ['--version'], { timeout: 15000 }, (err, stdout) => {
     if (err) {
       console.error(
         `❌ ${name} ishlamadi (${binPath}): ${err.message}\n` +
@@ -80,9 +80,30 @@ function checkBinary(name, binPath, notifyOnFail) {
     console.log(`✅ ${name} mavjud: v${String(stdout).trim().split('\n')[0]} (${binPath})`);
   });
 }
+// Diagnostika: DATA_DIR omon qolganini (deploy'dan keyin) bir qarashda bilish.
+function logDataDiagnostics() {
+  console.log('[data] DATA_DIR:', config.DATA_DIR);
+  const exists = fs.existsSync(config.DATA_DIR);
+  console.log('[data] mavjudmi:', exists);
+  if (exists) {
+    try {
+      console.log('[data] fayllar:', fs.readdirSync(config.DATA_DIR));
+    } catch (err) {
+      console.log('[data] readdirSync xato:', err.message);
+    }
+  }
+  try {
+    console.log('[data] users.json foydalanuvchilar soni:', storage.getUserCount());
+  } catch (err) {
+    console.log('[data] users soni o\'qib bo\'lmadi:', err.message);
+  }
+}
+logDataDiagnostics();
+
 logYtDlpDiagnostics();
 checkBinary('yt-dlp', config.YTDLP_PATH, true);
 checkBinary('gallery-dl', config.GALLERY_DL_PATH, false);
+checkBinary('ffmpeg', config.FFMPEG_PATH, false, ['-version']);
 
 const bot = new TelegramBot(config.BOT_TOKEN, { polling: true });
 
@@ -239,6 +260,15 @@ function validateCallback(data) {
     }
     return null;
   }
+  if (data.startsWith('page:')) {
+    // page:<searchId>:<page>
+    const parts = data.split(':');
+    if (parts.length !== 3) return null;
+    if (!/^[a-f0-9]{6,16}$/i.test(parts[1])) return null;
+    if (!/^\d{1,3}$/.test(parts[2])) return null;
+    return { kind: 'page' };
+  }
+  if (data === 'noop') return { kind: 'noop' };
   return null;
 }
 
@@ -264,6 +294,12 @@ bot.on('callback_query', (query) => {
         return;
       case 'song':
         await download.handleSongCallback(bot, query);
+        return;
+      case 'page':
+        await download.handlePageCallback(bot, query);
+        return;
+      case 'noop':
+        await bot.answerCallbackQuery(query.id).catch(() => {});
         return;
       case 'check_sub':
         await handleCheckSubscription(bot, query, v.userId);

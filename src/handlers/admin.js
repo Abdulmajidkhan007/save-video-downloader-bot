@@ -9,6 +9,7 @@ const notify = require('../services/notify');
 const {
   adminMenuKeyboard,
   adminChannelsKeyboard,
+  broadcastTargetKeyboard,
   broadcastModeKeyboard,
   backToMenuKeyboard,
 } = require('../utils/keyboard');
@@ -288,31 +289,35 @@ async function handleAdminCallback(bot, query) {
 
     case 'broadcast':
       await editMenu(
-        '📢 <b>Broadcast</b>\n\nXabar yuborish rejimini tanlang:',
-        broadcastModeKeyboard()
+        '📢 <b>Broadcast</b>\n\nKimga yuborilsin?',
+        broadcastTargetKeyboard()
       );
       break;
 
-    case 'bc_copy':
-      adminState.set(String(userId), { action: 'broadcast', mode: 'copy' });
+    case 'bc_target': {
+      const target = ['users', 'groups', 'all'].includes(parts[2]) ? parts[2] : 'users';
+      const label =
+        target === 'users' ? 'faqat userlar' : target === 'groups' ? 'faqat guruhlar' : 'hammasi';
       await editMenu(
-        '📢 <b>Broadcast (nusxa)</b>\n\n' +
+        `📢 <b>Broadcast — ${label}</b>\n\nYuborish rejimini tanlang:`,
+        broadcastModeKeyboard(target)
+      );
+      break;
+    }
+
+    case 'bc_copy':
+    case 'bc_forward': {
+      const mode = action === 'bc_copy' ? 'copy' : 'forward';
+      const target = ['users', 'groups', 'all'].includes(parts[2]) ? parts[2] : 'users';
+      adminState.set(String(userId), { action: 'broadcast', mode, target });
+      await editMenu(
+        `📢 <b>Broadcast (${mode === 'copy' ? 'nusxa' : 'forward'})</b>\n\n` +
           'Yubormoqchi bo\'lgan xabarni (matn/rasm/video) shu yerga yuboring.\n\n' +
           'Bekor qilish: /admin',
         backToMenuKeyboard()
       );
       break;
-
-    case 'bc_forward':
-      adminState.set(String(userId), { action: 'broadcast', mode: 'forward' });
-      await editMenu(
-        '📢 <b>Broadcast (forward)</b>\n\n' +
-          'Yubormoqchi bo\'lgan xabarni shu yerga yuboring — u foydalanuvchilarga ' +
-          'forward qilinadi.\n\n' +
-          'Bekor qilish: /admin',
-        backToMenuKeyboard()
-      );
-      break;
+    }
 
     default:
       break;
@@ -361,11 +366,15 @@ async function handleAdminInput(bot, msg) {
   // Broadcast
   if (state.action === 'broadcast') {
     adminState.delete(userId);
-    await bot.sendMessage(chatId, '📤 Broadcast boshlandi (faqat private userlar)...');
+    const target = state.target || 'users';
+    const targetLabel =
+      target === 'users' ? 'userlar' : target === 'groups' ? 'guruhlar' : 'hammasi';
+    await bot.sendMessage(chatId, `📤 Broadcast boshlandi (${targetLabel})...`);
     const progressMsg = await bot.sendMessage(chatId, '0 yuborildi...');
 
     const result = await runBroadcast(bot, {
       mode: state.mode,
+      target,
       source: { chatId, messageId: msg.message_id },
       onProgress: async (done, total) => {
         try {
@@ -382,18 +391,29 @@ async function handleAdminInput(bot, msg) {
     adminlog.log(
       'broadcast',
       adminInfo(msg.from),
-      `mode=${state.mode} jami=${result.total} yuborildi=${result.sent} bloklagan=${result.blocked}`
+      `mode=${state.mode} target=${target} ` +
+        `users(${result.userSent}/${result.userTotal},blok=${result.userBlocked}) ` +
+        `groups(${result.groupSent}/${result.groupTotal},chiqib=${result.groupFailed})`
     );
 
-    await bot.sendMessage(
-      chatId,
-      '✅ <b>Broadcast yakunlandi</b>\n\n' +
-        `📨 Jami private: ${result.total}\n` +
-        `✅ Yuborildi: ${result.sent}\n` +
-        `🚫 Bloklagan: ${result.blocked}` +
-        (result.failed ? `\n⚠️ Boshqa xato: ${result.failed}` : ''),
-      { parse_mode: 'HTML' }
-    );
+    let report = '✅ <b>Broadcast yakunlandi</b>\n';
+    if (target === 'users' || target === 'all') {
+      report +=
+        '\n👤 <b>Userlar</b>\n' +
+        `📨 Jami private: ${result.userTotal}\n` +
+        `✅ Yuborildi: ${result.userSent}\n` +
+        `🚫 Bloklagan: ${result.userBlocked}` +
+        (result.userFailed ? `\n⚠️ Boshqa xato: ${result.userFailed}` : '');
+    }
+    if (target === 'groups' || target === 'all') {
+      report +=
+        '\n\n👥 <b>Guruhlar</b>\n' +
+        `📨 Jami: ${result.groupTotal}\n` +
+        `✅ Yuborildi: ${result.groupSent}\n` +
+        `🚪 Chiqarilgan/xato (o'tkazildi): ${result.groupFailed}`;
+    }
+
+    await bot.sendMessage(chatId, report, { parse_mode: 'HTML' });
     return true;
   }
 

@@ -12,7 +12,10 @@ CommonJS (`require`), hech qanday database yo'q — JSON fayl persistensiya.
 - YouTube uchun format tanlash: 🎬 360p / 720p / 🎵 MP3
 - Har bir yuborilgan video ostida **🎵 Audio (MP3)** tugmasi
 - **Rasm yuklash** (Pinterest va boshqalar) — `gallery-dl` orqali, bittalik yoki albom
-- **Musiqa qidirish** — matn yozing, SoundCloud/YouTube'dan top 5 natija, tanlab MP3
+- **Musiqa qidirish** — matn yozing, SoundCloud/YouTube'dan 15 natija, sahifalab
+  (5 tadan, ⬅️/➡️ navigatsiya), tanlab MP3; yuklash xatosida «🔄 Qayta urinish» tugmasi
+- **Broadcast** userlarga, guruhlarga yoki hammasiga (👤/👥/📢); guruhga yuborilmasa
+  `left` belgilanib keyingi safar o'tkaziladi; hisobot userlar/guruhlar alohida
 - **Musiqa aniqlash** (Shazam kabi) — ovozli xabar yuboring, ACRCloud orqali aniqlanadi
 - **Guruh rejimi** — guruhlarda faqat havolalar uchun ishlaydi; **obuna guruhda ham**
   tekshiriladi (per-user «✅ Tekshirish» tugmasi — faqat o'sha user bosa oladi)
@@ -54,6 +57,7 @@ cp .env.example .env
 | --------------- | --------------------------------------------------- |
 | `BOT_TOKEN`         | @BotFather dan olingan token (**majburiy**)             |
 | `ADMIN_IDS`         | Admin ID lari, vergul bilan: `123,456` (**majburiy**)   |
+| `INITIAL_CHANNELS`  | Opsional: boshlang'ich obuna kanallari `@a,@b` (faqat channels.json bo'sh bo'lsa seed) |
 | `DATA_DIR`          | JSON papka (lokal `./data`, Railway `/app/data`)        |
 | `DOWNLOADS_DIR`     | Vaqtinchalik fayllar papkasi (default `./downloads`)    |
 | `YTDLP_COOKIES_B64` | Opsional: `cookies.txt` base64 ko'rinishi (YouTube fix) |
