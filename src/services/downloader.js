@@ -121,6 +121,28 @@ function isBotCheck(text) {
   return BOT_CHECK_MARKERS.some((m) => lower.includes(m.toLowerCase()));
 }
 
+function isFormatError(text) {
+  if (!text) return false;
+  const lower = String(text).toLowerCase();
+  return (
+    lower.includes('requested format is not available') || lower.includes('no such format')
+  );
+}
+
+// Diagnostika: "format not available" bo'lganda YouTube AYNAN qanday formatlar
+// berayotganini logga chiqaramiz. Bo'sh bo'lsa — PO-token/cookies muammosi;
+// to'la bo'lsa — bizning selektor muammosi.
+async function dumpFormats(url) {
+  try {
+    const { stdout, stderr } = await runYtDlp([...commonArgs(), '-F', url], { timeout: 60000 });
+    const out = (stdout || stderr || '').trim();
+    const lines = out.split('\n').slice(0, 20).join('\n');
+    console.error(`[dumpFormats] ${url}\n${lines || '(formatlar ro\'yxati bo\'sh — YouTube format bermadi)'}`);
+  } catch (err) {
+    console.error(`[dumpFormats] ${url} — -F ham xato: ${err.stderr || err.message}`);
+  }
+}
+
 // Har bir yuklash uchun noyob token — fayllarni ajratish uchun.
 function makeToken() {
   return crypto.randomBytes(8).toString('hex');
@@ -223,6 +245,9 @@ async function downloadVideo(url, opts = {}) {
     if (isBotCheck(combined)) {
       throw new BotCheckError();
     }
+    if (isFormatError(combined)) {
+      await dumpFormats(url); // diagnostika: aynan qanday formatlar bor?
+    }
     if (isNoVideo(combined)) {
       throw new NoVideoError();
     }
@@ -316,6 +341,9 @@ async function downloadAudio(url, known = {}) {
     );
     cleanupToken(dir, token);
     if (isBotCheck(combined)) throw new BotCheckError();
+    if (isFormatError(combined)) {
+      await dumpFormats(url); // diagnostika: aynan qanday formatlar bor?
+    }
     if (err.killed || err.signal === 'SIGTERM') {
       const e = new Error('AUDIO_TIMEOUT');
       e.code = 'TIMEOUT';
@@ -503,6 +531,7 @@ module.exports = {
   cleanDownloadsDir,
   makeToken,
   hasCookies,
+  videoFormatFor,
   BotCheckError,
   TooLargeError,
   NoVideoError,
