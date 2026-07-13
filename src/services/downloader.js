@@ -46,15 +46,16 @@ class NoVideoError extends Error {
   }
 }
 
-// "Bu yerda video yo'q" turidagi xato belgilari.
+// "Bu yerda video yo'q" (rasm posti) turidagi xato belgilari — gallery-dl'ga o'tiladi.
+// DIQQAT: "requested format is not available" bu YERGA KIRMAYDI — u format
+// tanlash muammosi (ayniqsa YouTube), rasm posti emas; uni rasm sifatida
+// urinib ko'rish faqat foydalanuvchiga chalkash xato beradi.
 const NO_VIDEO_MARKERS = [
   'no video',
   'there is no video',
   'unsupported url',
   'no media found',
   'no video formats found',
-  'requested format is not available',
-  'no formats found',
 ];
 
 function isNoVideo(text) {
