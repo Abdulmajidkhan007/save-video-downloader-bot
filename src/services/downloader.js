@@ -81,6 +81,11 @@ function commonArgs() {
   if (config.FFMPEG_PATH) {
     args.push('--ffmpeg-location', config.FFMPEG_PATH);
   }
+  // YouTube player_client — "Requested format is not available" muammosini
+  // datacenter IP'da yumshatadi ("off" bo'lsa qo'shilmaydi).
+  if (config.YTDLP_PLAYER_CLIENT && config.YTDLP_PLAYER_CLIENT.toLowerCase() !== 'off') {
+    args.push('--extractor-args', `youtube:player_client=${config.YTDLP_PLAYER_CLIENT}`);
+  }
   if (config.YTDLP_COOKIES && fs.existsSync(config.YTDLP_COOKIES)) {
     args.push('--cookies', config.YTDLP_COOKIES);
   }

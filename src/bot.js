@@ -32,12 +32,25 @@ downloader.cleanDownloadsDir();
 
 // cookies.txt ni base64 env'dan tiklaymiz (Railway Variables bir qatorli).
 function writeCookiesFromEnv() {
-  if (!config.YTDLP_COOKIES_B64) return;
+  if (!config.YTDLP_COOKIES_B64) {
+    // Muammoni tez aniqlash uchun holatni aniq log qilamiz.
+    if (fs.existsSync(config.YTDLP_COOKIES)) {
+      console.log(`ℹ️ cookies: YTDLP_COOKIES_B64 yo'q, lekin fayl bor: ${config.YTDLP_COOKIES}`);
+    } else {
+      console.log('⚠️ cookies: YTDLP_COOKIES_B64 berilmagan va cookies.txt yo\'q — YouTube bloklashi mumkin.');
+    }
+    return;
+  }
   try {
     const decoded = Buffer.from(config.YTDLP_COOKIES_B64, 'base64').toString('utf8');
     if (!fs.existsSync(config.DATA_DIR)) fs.mkdirSync(config.DATA_DIR, { recursive: true });
     fs.writeFileSync(config.YTDLP_COOKIES, decoded, 'utf8');
-    console.log(`✅ cookies yuklandi: ${config.YTDLP_COOKIES}`);
+    const lines = decoded.split('\n').filter((l) => l.trim() && !l.startsWith('#')).length;
+    const looksValid = /youtube\.com/i.test(decoded);
+    console.log(
+      `✅ cookies yuklandi: ${config.YTDLP_COOKIES} ` +
+        `(${lines} qator, youtube.com: ${looksValid ? 'bor' : "yo'q ⚠️"})`
+    );
   } catch (err) {
     console.error('[cookies] base64 dekod xato:', err.message);
   }
@@ -103,6 +116,9 @@ function logDataDiagnostics() {
 logDataDiagnostics();
 
 logYtDlpDiagnostics();
+console.log(
+  `[diag] YouTube player_client: ${config.YTDLP_PLAYER_CLIENT || '(o\'chiq)'}`
+);
 checkBinary('yt-dlp', config.YTDLP_PATH, true);
 checkBinary('gallery-dl', config.GALLERY_DL_PATH, false);
 checkBinary('ffmpeg', config.FFMPEG_PATH, false, ['-version']);
