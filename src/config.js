@@ -76,6 +76,13 @@ const config = {
   // yt-dlp binary yo'li — Railwayda standalone binary bin/yt-dlp ga yuklanadi.
   // Fallback absolyut yo'l bo'lsin: ish papkasi (cwd) o'zgarsa ham topilaveradi.
   YTDLP_PATH: process.env.YTDLP_PATH || path.join(__dirname, '..', 'bin', 'yt-dlp'),
+  // YouTube extractor player_client — datacenter IP'da "format not available"
+  // muammosini ko'p hollarda hal qiladi. Vergul bilan bir nechta berish mumkin.
+  // Bo'sh qilib butunlay o'chirish uchun YTDLP_PLAYER_CLIENT=off qo'ying.
+  YTDLP_PLAYER_CLIENT:
+    process.env.YTDLP_PLAYER_CLIENT === undefined
+      ? 'android,web'
+      : process.env.YTDLP_PLAYER_CLIENT,
   // gallery-dl binary yo'li (rasm yuklash uchun)
   GALLERY_DL_PATH:
     process.env.GALLERY_DL_PATH || path.join(__dirname, '..', 'bin', 'gallery-dl'),
