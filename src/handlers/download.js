@@ -338,6 +338,15 @@ async function handleDownloadError(bot, { chatId, platform, err, editStatus }) {
     );
     return;
   }
+  // "Requested format is not available" — YouTube shu videoni cheklagan.
+  const errText = `${err.stderr || ''} ${err.message || ''}`.toLowerCase();
+  if (errText.includes('requested format is not available') || errText.includes('no such format')) {
+    await editStatus(
+      '❌ Bu videoni yuklab bo\'lmadi — YouTube uni cheklagan bo\'lishi mumkin ' +
+        '(yosh chegarasi, region yoki faqat a\'zolar uchun). Boshqa video bilan urinib ko\'ring.'
+    );
+    return;
+  }
   await editStatus(
     '❌ Yuklab bo\'lmadi. Havola noto\'g\'ri, media maxfiy yoki ' +
       'o\'chirilgan bo\'lishi mumkin. Boshqa havola bilan urinib ko\'ring.'

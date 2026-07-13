@@ -81,7 +81,7 @@ const config = {
   // Bo'sh qilib butunlay o'chirish uchun YTDLP_PLAYER_CLIENT=off qo'ying.
   YTDLP_PLAYER_CLIENT:
     process.env.YTDLP_PLAYER_CLIENT === undefined
-      ? 'android,web'
+      ? 'default,web_safari,tv,android,ios'
       : process.env.YTDLP_PLAYER_CLIENT,
   // gallery-dl binary yo'li (rasm yuklash uchun)
   GALLERY_DL_PATH:
