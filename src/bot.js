@@ -119,6 +119,8 @@ logYtDlpDiagnostics();
 console.log(
   `[diag] YouTube player_client: ${config.YTDLP_PLAYER_CLIENT || '(o\'chiq)'}`
 );
+// Qaysi format-kod ishlayotganini aniq bilish uchun (deploy yangimi?).
+console.log(`[diag] video format (720): ${downloader.videoFormatFor('720')}`);
 checkBinary('yt-dlp', config.YTDLP_PATH, true);
 checkBinary('gallery-dl', config.GALLERY_DL_PATH, false);
 checkBinary('ffmpeg', config.FFMPEG_PATH, false, ['-version']);
