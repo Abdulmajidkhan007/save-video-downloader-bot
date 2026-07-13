@@ -165,18 +165,22 @@ function cleanupToken(dir, token) {
   }
 }
 
-// Format selektorlari — 50MB limitni yt-dlp darajasida qo'llaymiz.
+// Format selektorlari.
+// MUHIM: YouTube ko'p videolarda BIRLASHGAN (audio+video bitta faylda) format
+// bermaydi — faqat alohida oqimlar. Shuning uchun `best` (bitta fayl) ko'pincha
+// "Requested format is not available" beradi. Yechim: bestvideo+bestaudio ni
+// ffmpeg bilan birlashtiramiz (`bv*+ba/b`). Fayl hajmi yuklab bo'lingach
+// tekshiriladi (MAX_BYTES) — shuning uchun bu yerda filesize filtri kerak emas
+// (u ham "format not available" sababi bo'lishi mumkin).
 function videoFormatFor(quality) {
-  // quality: '360' | '720' | 'best'
-  const sizeCap = `[filesize<${MAX_MB}M]`;
   if (quality === '360') {
-    return `best[height<=360]${sizeCap}/best[height<=360]/best${sizeCap}/best`;
+    return 'bv*[height<=360]+ba/b[height<=360]/bv*+ba/b';
   }
   if (quality === '720') {
-    return `best[height<=720]${sizeCap}/best[height<=720]/best${sizeCap}/best`;
+    return 'bv*[height<=720]+ba/b[height<=720]/bv*+ba/b';
   }
-  // boshqa platformalar: eng yaxshi, lekin imkon qadar 50MB ichida
-  return `best${sizeCap}/best[ext=mp4]/best`;
+  // boshqa platformalar: birlashgan bo'lsa o'shani, aks holda merge
+  return 'b/bv*+ba/best';
 }
 
 /**
@@ -194,10 +198,10 @@ async function downloadVideo(url, opts = {}) {
   const args = [...commonArgs(), '-o', outputTemplate];
 
   if (opts.audioOnly) {
-    // MP3: faqat audio + ffmpeg orqali konvertatsiya
+    // MP3: faqat audio + ffmpeg orqali konvertatsiya (forgiving selektor)
     args.push(
       '-f',
-      'bestaudio/best',
+      'ba/bestaudio/best',
       '--extract-audio',
       '--audio-format',
       'mp3',
@@ -291,7 +295,7 @@ async function downloadAudio(url, known = {}) {
     '-o',
     outputTemplate,
     '-f',
-    'bestaudio/best',
+    'ba/bestaudio/best',
     '--extract-audio',
     '--audio-format',
     'mp3',
