@@ -103,7 +103,7 @@ async function performDownload(
         result = await downloader.downloadVideo(url, { ...opts, quality });
         break;
       } catch (e) {
-        if (e instanceof downloader.TooLargeError) {
+        if (config.AUTO_DOWNSCALE && e instanceof downloader.TooLargeError) {
           const lower = downloader.nextLowerQuality(quality);
           if (lower) {
             await editStatus(`⚠️ Hajmi ${e.sizeMb}MB — ${lower}p ga pasaytirib qayta urinilmoqda...`);
