@@ -87,10 +87,29 @@ function commonArgs() {
   if (config.YTDLP_PLAYER_CLIENT && config.YTDLP_PLAYER_CLIENT.toLowerCase() !== 'off') {
     args.push('--extractor-args', `youtube:player_client=${config.YTDLP_PLAYER_CLIENT}`);
   }
+  // Proxy — datacenter IP bloklovi uchun eng ishonchli yechim.
+  if (config.YTDLP_PROXY) {
+    args.push('--proxy', config.YTDLP_PROXY);
+  }
   if (config.YTDLP_COOKIES && fs.existsSync(config.YTDLP_COOKIES)) {
     args.push('--cookies', config.YTDLP_COOKIES);
   }
+  // Qo'shimcha argumentlar (PO token va h.k.) — bo'sh joy/qo'shtirnoqni hisobga olib.
+  if (config.YTDLP_EXTRA_ARGS) {
+    for (const a of tokenizeArgs(config.YTDLP_EXTRA_ARGS)) args.push(a);
+  }
   return args;
+}
+
+// "a b \"c d\"" -> ['a','b','c d'] — oddiy shell-uslub tokenizer.
+function tokenizeArgs(str) {
+  const out = [];
+  const re = /"([^"]*)"|'([^']*)'|(\S+)/g;
+  let m;
+  while ((m = re.exec(str)) !== null) {
+    out.push(m[1] !== undefined ? m[1] : m[2] !== undefined ? m[2] : m[3]);
+  }
+  return out;
 }
 
 // execFile ni Promise ga o'raymiz.
@@ -198,11 +217,20 @@ function videoFormatFor(quality) {
   if (quality === '360') {
     return 'bv*[height<=360]+ba/b[height<=360]/bv*+ba/b';
   }
+  if (quality === '480') {
+    return 'bv*[height<=480]+ba/b[height<=480]/bv*+ba/b';
+  }
   if (quality === '720') {
     return 'bv*[height<=720]+ba/b[height<=720]/bv*+ba/b';
   }
   // boshqa platformalar: birlashgan bo'lsa o'shani, aks holda merge
   return 'b/bv*+ba/best';
+}
+
+// 50MB dan katta bo'lsa avtomatik pasaytirish uchun keyingi sifat.
+const NEXT_LOWER_QUALITY = { best: '720', 720: '480', 480: '360', 360: null };
+function nextLowerQuality(quality) {
+  return NEXT_LOWER_QUALITY[quality] || null;
 }
 
 /**
@@ -466,6 +494,7 @@ async function downloadImages(url, { max = 10 } = {}) {
   fs.mkdirSync(dir, { recursive: true });
 
   const args = ['-D', dir, '--range', `1-${max}`];
+  if (config.YTDLP_PROXY) args.push('--proxy', config.YTDLP_PROXY);
   if (hasCookies()) args.push('--cookies', config.YTDLP_COOKIES);
   args.push(url);
 
@@ -532,6 +561,7 @@ module.exports = {
   makeToken,
   hasCookies,
   videoFormatFor,
+  nextLowerQuality,
   BotCheckError,
   TooLargeError,
   NoVideoError,
