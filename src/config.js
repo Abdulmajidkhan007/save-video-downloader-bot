@@ -83,6 +83,12 @@ const config = {
     process.env.YTDLP_PLAYER_CLIENT === undefined
       ? 'default,web_safari,tv,android,ios'
       : process.env.YTDLP_PLAYER_CLIENT,
+  // Proxy — datacenter IP bloklovi uchun (masalan: http://user:pass@host:port).
+  // YouTube Railway/AWS IP'larini bloklaydi; residential proxy buni hal qiladi.
+  YTDLP_PROXY: process.env.YTDLP_PROXY || '',
+  // Qo'shimcha yt-dlp argumentlari (bo'sh joy bilan). Masalan PO token:
+  // --extractor-args "youtube:po_token=web+XXXX"
+  YTDLP_EXTRA_ARGS: process.env.YTDLP_EXTRA_ARGS || '',
   // gallery-dl binary yo'li (rasm yuklash uchun)
   GALLERY_DL_PATH:
     process.env.GALLERY_DL_PATH || path.join(__dirname, '..', 'bin', 'gallery-dl'),

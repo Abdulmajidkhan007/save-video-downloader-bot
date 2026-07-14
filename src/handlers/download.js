@@ -95,7 +95,25 @@ async function performDownload(
   let result = null;
   try {
     await editStatus('⏳ Yuklanmoqda...');
-    result = await downloader.downloadVideo(url, opts);
+    // 50MB'dan katta bo'lsa — sifatni avtomatik pasaytirib qayta urinamiz
+    // (720p → 480p → 360p), toki Telegram limitiga sig'guncha.
+    let quality = opts.quality || 'best';
+    for (;;) {
+      try {
+        result = await downloader.downloadVideo(url, { ...opts, quality });
+        break;
+      } catch (e) {
+        if (e instanceof downloader.TooLargeError) {
+          const lower = downloader.nextLowerQuality(quality);
+          if (lower) {
+            await editStatus(`⚠️ Hajmi ${e.sizeMb}MB — ${lower}p ga pasaytirib qayta urinilmoqda...`);
+            quality = lower;
+            continue;
+          }
+        }
+        throw e;
+      }
+    }
     await editStatus('📤 Yuborilmoqda...');
 
     // Videoga "🎵 Audio (MP3)" tugmasini biriktiramiz (urlcache orqali).
@@ -332,9 +350,9 @@ async function handleDownloadError(bot, { chatId, platform, err, editStatus }) {
   }
   if (err instanceof downloader.TooLargeError) {
     await editStatus(
-      `❌ Video hajmi ${err.sizeMb}MB — Telegram orqali yuborib bo\'lmaydi ` +
-        `(limit ${downloader.MAX_MB}MB).\n\n` +
-        'YouTube uchun pastroq sifat (360p) tanlab ko\'ring.'
+      `❌ Video juda katta (${err.sizeMb}MB) — eng past sifatda ham ` +
+        `Telegram limitidan (${downloader.MAX_MB}MB) oshib ketdi.\n\n` +
+        'Bu odatda uzun yoki yuqori sifatli video. Iltimos, qisqaroq video tanlang.'
     );
     return;
   }

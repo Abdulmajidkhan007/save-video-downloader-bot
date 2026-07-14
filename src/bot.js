@@ -121,6 +121,7 @@ console.log(
 );
 // Qaysi format-kod ishlayotganini aniq bilish uchun (deploy yangimi?).
 console.log(`[diag] video format (720): ${downloader.videoFormatFor('720')}`);
+console.log(`[diag] proxy: ${config.YTDLP_PROXY ? 'bor' : "yo'q"}`);
 checkBinary('yt-dlp', config.YTDLP_PATH, true);
 checkBinary('gallery-dl', config.GALLERY_DL_PATH, false);
 checkBinary('ffmpeg', config.FFMPEG_PATH, false, ['-version']);
