@@ -181,16 +181,24 @@ src/
   **admin** qilib qo'shilishi kerak — bu BotFather'dan emas, **kanal sozlamasidan**
   qo'lda qilinadi. Aks holda Telegram botga `channel_post` yubormaydi.
 
-## 🛣 2-bosqich (reja) — 50MB+ fayllar uchun Local Bot API Server
+## 🛣 50MB+ fayllar (2GB gacha) — Local Bot API Server
 
-Hozircha Telegram Bot API 50MB limiti bor. Kelajakda uni 2GB gacha ko'tarish uchun:
+Rasmiy Telegram Bot API botlar uchun **50MB** limit qo'yadi. **4GB — botlarga
+tegishli emas** (u faqat Premium foydalanuvchilar uchun ilovada). Botlar uchun
+maksimal — **Local Bot API Server bilan 2GB**.
 
-1. Railway'da **alohida servis** sifatida `aiogram/telegram-bot-api` (yoki
-   rasmiy `telegram-bot-api`) Docker image'ini deploy qilish.
-2. [my.telegram.org](https://my.telegram.org) dan `API_ID` va `API_HASH` olish va
-   ularni o'sha servisga env sifatida berish.
-3. Botda `node-telegram-bot-api` ni `baseApiUrl` (masalan
-   `http://<local-api-servis>:8081`) ga yo'naltirish.
-4. Natijada fayl yuborish limiti **2GB** bo'ladi va 50MB tekshiruvi yumshatiladi.
+Kod buni **qo'llab-quvvatlaydi** (`TELEGRAM_API_URL` + `MAX_FILE_SIZE_MB`). Yoqish:
 
-> Bu bosqich hozir amalga oshirilmagan — faqat reja.
+1. Railway'da **alohida servis** sifatida `telegram-bot-api`
+   ([tdlib/telegram-bot-api](https://github.com/tdlib/telegram-bot-api)) Docker
+   image'ini deploy qiling.
+2. [my.telegram.org](https://my.telegram.org) dan `API_ID` / `API_HASH` olib,
+   o'sha servisga bering.
+3. Bot servisida env qo'ying:
+   - `TELEGRAM_API_URL` = `http://<local-api-servis>:8081`
+   - `MAX_FILE_SIZE_MB` = `2000`
+   - `AUTO_DOWNSCALE` = `off` (video to'liq sifatda ketsin, pasaymasin)
+4. Natijada fayllar **2GB gacha to'liq sifatda** yuboriladi.
+
+> Local API'siz: `AUTO_DOWNSCALE=on` (default) — 50MB'dan katta video avtomatik
+> 720→480→360p ga pasaytiriladi, toki limitiga sig'guncha.

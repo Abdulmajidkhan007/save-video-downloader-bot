@@ -122,11 +122,21 @@ console.log(
 // Qaysi format-kod ishlayotganini aniq bilish uchun (deploy yangimi?).
 console.log(`[diag] video format (720): ${downloader.videoFormatFor('720')}`);
 console.log(`[diag] proxy: ${config.YTDLP_PROXY ? 'bor' : "yo'q"}`);
+console.log(
+  `[diag] fayl limiti: ${config.MAX_FILE_SIZE_MB}MB` +
+    ` | Bot API: ${config.TELEGRAM_API_URL || 'rasmiy (api.telegram.org, 50MB)'}` +
+    ` | auto-downscale: ${config.AUTO_DOWNSCALE ? 'yoniq' : "o'chiq"}`
+);
 checkBinary('yt-dlp', config.YTDLP_PATH, true);
 checkBinary('gallery-dl', config.GALLERY_DL_PATH, false);
 checkBinary('ffmpeg', config.FFMPEG_PATH, false, ['-version']);
 
-const bot = new TelegramBot(config.BOT_TOKEN, { polling: true });
+const botOptions = { polling: true };
+// Local Bot API Server ulangan bo'lsa — 2GB gacha fayl yuborish mumkin.
+if (config.TELEGRAM_API_URL) {
+  botOptions.baseApiUrl = config.TELEGRAM_API_URL;
+}
+const bot = new TelegramBot(config.BOT_TOKEN, botOptions);
 
 // notify moduliga bot instansiyasini beramiz (admin xabarlari uchun).
 notify.setBot(bot);

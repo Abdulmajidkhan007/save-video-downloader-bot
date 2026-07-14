@@ -101,9 +101,21 @@ const config = {
   ACR_ACCESS_KEY: process.env.ACR_ACCESS_KEY || '',
   ACR_ACCESS_SECRET: process.env.ACR_ACCESS_SECRET || '',
 
-  // Telegram Bot API orqali fayl yuborish limiti (50 MB)
-  MAX_FILE_SIZE_MB: 50,
-  MAX_FILE_SIZE_BYTES: 50 * 1024 * 1024,
+  // Local Bot API Server manzili (baseApiUrl). Bo'sh bo'lsa — rasmiy
+  // api.telegram.org (50MB limit). Local server bilan 2GB gacha yuborish mumkin.
+  TELEGRAM_API_URL: process.env.TELEGRAM_API_URL || '',
+  // Fayl yuborish limiti (MB). Rasmiy Bot API — 50; Local Bot API — 2000 gacha.
+  // Local server ishlatsangiz env'da MAX_FILE_SIZE_MB=2000 qiling.
+  MAX_FILE_SIZE_MB: Number(process.env.MAX_FILE_SIZE_MB) > 0
+    ? Number(process.env.MAX_FILE_SIZE_MB)
+    : 50,
+  MAX_FILE_SIZE_BYTES:
+    (Number(process.env.MAX_FILE_SIZE_MB) > 0 ? Number(process.env.MAX_FILE_SIZE_MB) : 50) *
+    1024 *
+    1024,
+  // Katta videoni avtomatik sifat pasaytirish (720→480→360). Local API bilan
+  // 2GB limit bo'lgani uchun odatda kerak emas — o'chirish: AUTO_DOWNSCALE=off.
+  AUTO_DOWNSCALE: process.env.AUTO_DOWNSCALE !== 'off',
 
   // Broadcast rate-limit: soniyasiga ~25 xabar
   BROADCAST_RATE_PER_SEC: 25,
