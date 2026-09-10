@@ -1,0 +1,16 @@
+{
+  "name": "quiz-bot",
+  "version": "1.0.0",
+  "description": "IT yo'nalishlari bo'yicha test boti (Telegram)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "node-telegram-bot-api": "0.66.0"
+  }
+}

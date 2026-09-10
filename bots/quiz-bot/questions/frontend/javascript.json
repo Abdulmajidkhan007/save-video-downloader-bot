@@ -1,0 +1,18 @@
+{
+  "direction": "frontend",
+  "directionLabel": "Frontend",
+  "key": "javascript",
+  "label": "JavaScript",
+  "questions": [
+    { "q": "JavaScript'da o'zgaruvchi e'lon qilish uchun qaysi kalit so'z ISHLATILMAYDI?", "options": ["int", "let", "const", "var"], "correct": 0 },
+    { "q": "typeof [] (massiv) natijasi nima?", "options": ["object", "array", "list", "undefined"], "correct": 0 },
+    { "q": "=== operatori nima qiladi?", "options": ["Qiymat va turni qat'iy solishtiradi", "Faqat qiymatni solishtiradi", "Qiymat tayinlaydi", "Qo'shadi"], "correct": 0 },
+    { "q": "Massiv oxiriga element qo'shish uchun qaysi metod?", "options": ["push()", "pop()", "shift()", "slice()"], "correct": 0 },
+    { "q": "JSON.parse() nima qiladi?", "options": ["JSON matnni obyektga aylantiradi", "Obyektni matnga aylantiradi", "Faylni o'qiydi", "Massiv yaratadi"], "correct": 0 },
+    { "q": "\"5\" + 3 natijasi nima?", "options": ["\"53\"", "8", "53", "xato"], "correct": 0 },
+    { "q": "Arrow function qaysi biri?", "options": ["() => {}", "function() {}", "def()", "fn -> {}"], "correct": 0 },
+    { "q": "null va undefined farqi nima?", "options": ["null - ataylab bo'sh, undefined - aniqlanmagan", "Ikkalasi bir xil", "null - son, undefined - matn", "Farqi yo'q"], "correct": 0 },
+    { "q": "let x = 10; const ... bilan e'lon qilingan o'zgaruvchini nima qilib bo'lmaydi?", "options": ["Qayta qiymat berib", "O'qib", "Ishlatib", "Konsolga chiqarib"], "correct": 0 },
+    { "q": "Array'dagi har bir element uchun ishlaydigan metod qaysi?", "options": ["forEach()", "find()", "indexOf()", "join()"], "correct": 0 }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "video-downloader-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot to download videos from Instagram, TikTok, YouTube, Facebook, Twitter/X, Pinterest, Likee",
+  "main": "src/bot.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/bot.js",
+    "dev": "node src/bot.js",
+    "postinstall": "mkdir -p bin && curl -fL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o bin/yt-dlp && chmod +x bin/yt-dlp && curl -fL https://codeberg.org/mikf/gallery-dl/releases/download/v1.32.5/gallery-dl.bin -o bin/gallery-dl && chmod +x bin/gallery-dl && curl -fL https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o /tmp/ff.tar.xz && tar -xJf /tmp/ff.tar.xz -C /tmp && cp /tmp/ffmpeg-*-amd64-static/ffmpeg bin/ffmpeg && cp /tmp/ffmpeg-*-amd64-static/ffprobe bin/ffprobe && chmod +x bin/ffmpeg bin/ffprobe"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "16.4.5",
+    "node-telegram-bot-api": "0.66.0"
+  },
+  "license": "MIT"
+}

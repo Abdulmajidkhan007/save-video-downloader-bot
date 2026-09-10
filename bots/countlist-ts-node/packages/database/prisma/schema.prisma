@@ -1,0 +1,360 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USERS ───────────────────────────────────────────────────────
+model User {
+  id               String   @id @default(cuid())
+  telegramId       BigInt   @unique @map("telegram_id")
+  username         String?
+  firstName        String   @map("first_name")
+  lastName         String?  @map("last_name")
+  languageCode     String   @default("uz") @map("language_code")
+  isBot            Boolean  @default(false) @map("is_bot")
+  passwordHash     String?  @map("password_hash")
+  role             UserRole @default(USER)
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  // Relations
+  groupMembers     GroupMember[]
+  expenses         Expense[]
+  monthlyLimits    MonthlyLimit[]
+  recurringExpenses RecurringExpense[]
+  exports          Export[]
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+  refreshTokens    RefreshToken[]
+
+  @@map("users")
+  @@index([telegramId])
+  @@index([isActive])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  USER
+}
+
+// ─── GROUPS ──────────────────────────────────────────────────────
+model Group {
+  id               String      @id @default(cuid())
+  telegramId       BigInt      @unique @map("telegram_id")
+  title            String
+  type             GroupType   @default(GROUP)
+  username         String?
+  description      String?
+  currency         String      @default("UZS")
+  timezone         String      @default("Asia/Tashkent")
+  language         String      @default("uz")
+  isActive         Boolean     @default(true) @map("is_active")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  deletedAt        DateTime?   @map("deleted_at")
+
+  // Relations
+  members          GroupMember[]
+  expenses         Expense[]
+  categories       Category[]
+  monthlyLimits    MonthlyLimit[]
+  recurringExpenses RecurringExpense[]
+  exports          Export[]
+  settings         GroupSettings?
+
+  @@map("groups")
+  @@index([telegramId])
+  @@index([isActive])
+}
+
+enum GroupType {
+  GROUP
+  SUPERGROUP
+  CHANNEL
+}
+
+// ─── GROUP SETTINGS ───────────────────────────────────────────────
+model GroupSettings {
+  id                   String   @id @default(cuid())
+  groupId              String   @unique @map("group_id")
+  allowMemberExpenses  Boolean  @default(true) @map("allow_member_expenses")
+  requireApproval      Boolean  @default(false) @map("require_approval")
+  notifyOnExpense      Boolean  @default(false) @map("notify_on_expense")
+  monthlyBudget        Decimal? @map("monthly_budget") @db.Decimal(15, 2)
+  alertThreshold       Int      @default(80) @map("alert_threshold")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@map("group_settings")
+}
+
+// ─── GROUP MEMBERS ────────────────────────────────────────────────
+model GroupMember {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  groupId   String           @map("group_id")
+  role      GroupMemberRole  @default(MEMBER)
+  joinedAt  DateTime         @default(now()) @map("joined_at")
+  isActive  Boolean          @default(true) @map("is_active")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@map("group_members")
+  @@index([groupId])
+  @@index([userId])
+}
+
+enum GroupMemberRole {
+  ADMIN
+  MEMBER
+}
+
+// ─── CATEGORIES ───────────────────────────────────────────────────
+model Category {
+  id          String    @id @default(cuid())
+  groupId     String?   @map("group_id")
+  name        String
+  nameUz      String?   @map("name_uz")
+  icon        String    @default("💰")
+  color       String    @default("#6366f1")
+  isDefault   Boolean   @default(false) @map("is_default")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  group          Group?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  expenses       Expense[]
+  monthlyLimits  MonthlyLimit[]
+  recurringExpenses RecurringExpense[]
+
+  @@map("categories")
+  @@index([groupId])
+  @@index([isDefault])
+}
+
+// ─── EXPENSES ─────────────────────────────────────────────────────
+model Expense {
+  id           String          @id @default(cuid())
+  userId       String          @map("user_id")
+  groupId      String          @map("group_id")
+  categoryId   String?         @map("category_id")
+  amount       Decimal         @db.Decimal(15, 2)
+  currency     String          @default("UZS")
+  description  String
+  rawText      String?         @map("raw_text")
+  date         DateTime        @default(now())
+  month        Int
+  year         Int
+  week         Int
+  dayOfYear    Int             @map("day_of_year")
+  status       ExpenseStatus   @default(ACTIVE)
+  source       ExpenseSource   @default(TEXT)
+  receiptUrl   String?         @map("receipt_url")
+  isRecurring  Boolean         @default(false) @map("is_recurring")
+  recurringId  String?         @map("recurring_id")
+  telegramMsgId BigInt?        @map("telegram_msg_id")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  deletedAt    DateTime?       @map("deleted_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  category  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  recurring RecurringExpense? @relation(fields: [recurringId], references: [id], onDelete: SetNull)
+
+  @@map("expenses")
+  @@index([groupId, month, year])
+  @@index([userId, month, year])
+  @@index([groupId, year, dayOfYear])
+  @@index([groupId, year, week])
+  @@index([categoryId])
+  @@index([date])
+  @@index([status])
+}
+
+enum ExpenseStatus {
+  ACTIVE
+  PENDING
+  REJECTED
+  DELETED
+}
+
+enum ExpenseSource {
+  TEXT
+  VOICE
+  OCR
+  RECURRING
+  MANUAL
+}
+
+// ─── MONTHLY LIMITS ───────────────────────────────────────────────
+model MonthlyLimit {
+  id          String    @id @default(cuid())
+  userId      String?   @map("user_id")
+  groupId     String    @map("group_id")
+  categoryId  String?   @map("category_id")
+  amount      Decimal   @db.Decimal(15, 2)
+  currency    String    @default("UZS")
+  month       Int
+  year        Int
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  category  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@unique([groupId, userId, categoryId, month, year])
+  @@map("monthly_limits")
+  @@index([groupId, month, year])
+}
+
+// ─── RECURRING EXPENSES ───────────────────────────────────────────
+model RecurringExpense {
+  id          String            @id @default(cuid())
+  userId      String            @map("user_id")
+  groupId     String            @map("group_id")
+  categoryId  String?           @map("category_id")
+  amount      Decimal           @db.Decimal(15, 2)
+  currency    String            @default("UZS")
+  description String
+  frequency   RecurringFreq
+  dayOfMonth  Int?              @map("day_of_month")
+  dayOfWeek   Int?              @map("day_of_week")
+  startDate   DateTime          @map("start_date")
+  endDate     DateTime?         @map("end_date")
+  lastRunAt   DateTime?         @map("last_run_at")
+  nextRunAt   DateTime          @map("next_run_at")
+  isActive    Boolean           @default(true) @map("is_active")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  category  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  expenses  Expense[]
+
+  @@map("recurring_expenses")
+  @@index([groupId, isActive])
+  @@index([nextRunAt, isActive])
+}
+
+enum RecurringFreq {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+// ─── EXPORTS ──────────────────────────────────────────────────────
+model Export {
+  id          String        @id @default(cuid())
+  userId      String        @map("user_id")
+  groupId     String        @map("group_id")
+  format      ExportFormat
+  status      ExportStatus  @default(PENDING)
+  fileUrl     String?       @map("file_url")
+  filters     Json?
+  error       String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  completedAt DateTime?     @map("completed_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@map("exports")
+  @@index([userId, createdAt])
+  @@index([groupId, createdAt])
+}
+
+enum ExportFormat {
+  PDF
+  CSV
+  EXCEL
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String             @map("user_id")
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean            @default(false) @map("is_read")
+  sentAt    DateTime?          @map("sent_at")
+  createdAt DateTime           @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  EXPENSE_ADDED
+  LIMIT_REACHED
+  LIMIT_WARNING
+  EXPORT_READY
+  RECURRING_TRIGGERED
+  SYSTEM
+}
+
+// ─── AUDIT LOGS ───────────────────────────────────────────────────
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?  @map("user_id")
+  action     String
+  resource   String
+  resourceId String?  @map("resource_id")
+  oldData    Json?    @map("old_data")
+  newData    Json?    @map("new_data")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+  @@index([userId, createdAt])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+}
+
+// ─── REFRESH TOKENS ───────────────────────────────────────────────
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  isRevoked Boolean  @default(false) @map("is_revoked")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+  @@index([token])
+  @@index([userId])
+}

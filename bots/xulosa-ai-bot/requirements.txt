@@ -1,0 +1,6 @@
+telethon
+google-genai
+mutagen
+qrcode
+pillow
+python-dotenv

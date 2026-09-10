@@ -1,0 +1,57 @@
+FROM node:20-alpine AS builder
+RUN apk add --no-cache openssl
+WORKDIR /app
+
+COPY package.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/database/package.json ./packages/database/
+COPY apps/bot/package.json ./apps/bot/
+
+RUN yarn install
+
+COPY packages/ ./packages/
+COPY apps/bot/ ./apps/bot/
+
+RUN cd packages/shared && npx tsc
+RUN cd packages/database && npx prisma generate && npx tsc
+
+RUN node -e " \
+  const fs = require('fs'); \
+  ['packages/shared','packages/database'].forEach(p => { \
+    const f = p + '/package.json'; \
+    const pkg = JSON.parse(fs.readFileSync(f)); \
+    pkg.main = 'dist/index.js'; \
+    pkg.types = 'dist/index.d.ts'; \
+    fs.writeFileSync(f, JSON.stringify(pkg, null, 2)); \
+  })"
+
+RUN cd apps/bot && npx tsc
+
+FROM node:20-alpine
+RUN apk add --no-cache openssl
+WORKDIR /app
+
+COPY package.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/database/package.json ./packages/database/
+COPY apps/bot/package.json ./apps/bot/
+
+RUN yarn install --production
+
+RUN node -e " \
+  const fs = require('fs'); \
+  ['packages/shared','packages/database'].forEach(p => { \
+    const f = p + '/package.json'; \
+    const pkg = JSON.parse(fs.readFileSync(f)); \
+    pkg.main = 'dist/index.js'; \
+    pkg.types = 'dist/index.d.ts'; \
+    fs.writeFileSync(f, JSON.stringify(pkg, null, 2)); \
+  })"
+
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/packages/database/dist ./packages/database/dist
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/apps/bot/dist ./apps/bot/dist
+
+ENV NODE_ENV=production
+CMD ["node", "apps/bot/dist/index.js"]

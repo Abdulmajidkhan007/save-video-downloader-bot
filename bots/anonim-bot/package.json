@@ -1,0 +1,16 @@
+{
+  "name": "anonim-bot",
+  "version": "2.2.1",
+  "description": "Anonim savol-javob Telegram boti (referral, bloklash, shikoyat, admin panel, kanal obunasi)",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node -r dotenv/config index.js",
+    "test": "node test/smoke.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "node-telegram-bot-api": "0.66.0"
+  }
+}

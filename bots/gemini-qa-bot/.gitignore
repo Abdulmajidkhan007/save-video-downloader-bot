@@ -1,0 +1,14 @@
+# Maxfiy: API kalitlar hech qachon repoga tushmasligi kerak
+.env
+.env.local
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Lokal ma'lumotlar
+data/
+
+# OS / muharrir
+.DS_Store
+*.log

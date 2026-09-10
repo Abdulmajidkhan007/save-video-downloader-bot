@@ -1,0 +1,16 @@
+{
+  "direction": "backend",
+  "directionLabel": "Backend",
+  "key": "python",
+  "label": "Python",
+  "questions": [
+    { "q": "Python'da ro'yxat (list) qaysi qavslar bilan belgilanadi?", "options": ["[ ]", "{ }", "( )", "< >"], "correct": 0 },
+    { "q": "Funksiya e'lon qilish uchun qaysi kalit so'z?", "options": ["def", "function", "func", "fn"], "correct": 0 },
+    { "q": "len() funksiyasi nima qiladi?", "options": ["Uzunlik/element sonini qaytaradi", "Ro'yxatni saralaydi", "Element qo'shadi", "Faylni ochadi"], "correct": 0 },
+    { "q": "Python'da bir qatorli izoh (comment) qanday yoziladi?", "options": ["# bilan", "// bilan", "/* */ bilan", "-- bilan"], "correct": 0 },
+    { "q": "print(type(5)) natijasi nima?", "options": ["<class 'int'>", "<class 'str'>", "int", "5"], "correct": 0 },
+    { "q": "Lug'at (dictionary) qaysi qavslar bilan belgilanadi?", "options": ["{ }", "[ ]", "( )", "/ /"], "correct": 0 },
+    { "q": "Python'da kod bloklari qanday ajratiladi?", "options": ["Otступ (indentation) bilan", "Nuqtali vergul bilan", "Jingalak qavs bilan", "Qavs bilan"], "correct": 0 },
+    { "q": "range(3) qaysi qiymatlarni beradi?", "options": ["0, 1, 2", "1, 2, 3", "0, 1, 2, 3", "3"], "correct": 0 }
+  ]
+}

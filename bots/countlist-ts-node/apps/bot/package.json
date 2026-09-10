@@ -1,0 +1,27 @@
+{
+  "name": "@expense-tracker/bot",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "@prisma/client": "^5.10.2",
+    "ioredis": "^5.3.2",
+    "axios": "^1.6.7",
+    "date-fns": "^3.3.1",
+    "winston": "^3.11.0",
+    "zod": "^3.22.4",
+    "dotenv": "^16.4.5",
+    "@expense-tracker/shared": "*",
+    "@expense-tracker/database": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.11.5",
+    "ts-node-dev": "^2.0.0"
+  }
+}
