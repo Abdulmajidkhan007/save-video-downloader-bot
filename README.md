@@ -97,6 +97,20 @@ npm install && cp -n .env.example .env && node src/bot.js
 
 > `.env` dagi `BOT_TOKEN` va `ADMIN_IDS` ni to'ldirib bo'lgach ishga tushiring.
 
+### 🏠 Uy qurilmasida ishga tushirish (YouTube bepul yechim)
+YouTube datacenter IP'larni (Railway) bloklaydi. Botni **uy qurilmangizda** (Kali/Linux
+kompyuter yoki Termux) ishga tushirsangiz — yt-dlp uy internetingiz (residential IP)
+orqali chiqadi va YouTube ishlaydi (**proxy/pul kerak emas**).
+
+- Tizimda `yt-dlp`, `ffmpeg`, `gallery-dl` o'rnatilgan bo'lsa — kod ularni **avtomatik
+  topadi** (`bin/` bo'lmasa PATH'dan). Termux: `pkg install nodejs ffmpeg python`,
+  keyin `pip install yt-dlp gallery-dl`.
+- `npm install --ignore-scripts` (Railway binary'larini yuklamaslik uchun), keyin `node src/bot.js`.
+- **Faqat bitta instansiya** ishlasin — Railway'dagi bot servisini to'xtating (409 Conflict).
+- 2GB kerak bo'lsa: `.env` da `TELEGRAM_API_URL` ni Railway `bot-api` public URL'iga
+  yo'naltiring (aks holda 50MB).
+- Qurilma doim **yoniq** turishi kerak.
+
 ## ☁️ 2. Railway deploy qadamlari
 
 1. Loyihani GitHub ga push qiling.
