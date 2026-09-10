@@ -10,7 +10,20 @@ const fs = require('fs');
 // Shunда Railway'da bin/ ishlatiladi, uy qurilmasida (Termux/Kali) tizimdagi
 // yt-dlp/ffmpeg/gallery-dl avtomatik topiladi — qo'shimcha sozlashsiz.
 function resolveBinary(envVal, bundledPath, systemName) {
-  if (envVal) return envVal;
+  // env yo'l ko'rsatsa-yu (/ bor) fayl mavjud bo'lmasa — uni e'tiborsiz qoldiramiz
+  // (masalan .env dagi ./bin/yt-dlp uy qurilmasida yo'q). Bare nom (yt-dlp) — PATH'dan.
+  if (envVal) {
+    if (envVal.includes('/')) {
+      try {
+        if (fs.existsSync(envVal)) return envVal;
+      } catch (_) {
+        /* ignore */
+      }
+      // yo'l noto'g'ri — pastdagi fallback'ga o'tamiz
+    } else {
+      return envVal;
+    }
+  }
   try {
     if (fs.existsSync(bundledPath)) return bundledPath;
   } catch (_) {
