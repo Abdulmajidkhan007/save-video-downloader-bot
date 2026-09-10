@@ -114,7 +114,12 @@ async function performDownload(
         throw e;
       }
     }
-    await editStatus('📤 Yuborilmoqda...');
+    // Katta fayl bo'lsa yuborish uzoq davom etadi — foydalanuvchini ogohlantiramiz.
+    if (result.size > 50 * 1024 * 1024) {
+      await editStatus('⏳ Katta video, biroz kuting...');
+    } else {
+      await editStatus('📤 Yuborilmoqda...');
+    }
 
     // Videoga "🎵 Audio (MP3)" tugmasini biriktiramiz (urlcache orqali).
     const cacheId = urlcache.put(url, { platform: platform.name });

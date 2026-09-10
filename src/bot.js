@@ -122,10 +122,14 @@ console.log(
 // Qaysi format-kod ishlayotganini aniq bilish uchun (deploy yangimi?).
 console.log(`[diag] video format (720): ${downloader.videoFormatFor('720')}`);
 console.log(`[diag] proxy: ${config.YTDLP_PROXY ? 'bor' : "yo'q"}`);
+// Qaysi Bot API ishlatilayotgani aniq ko'rinsin.
+if (config.TELEGRAM_API_URL) {
+  console.log(`✅ Local Bot API ishlatilmoqda: ${config.TELEGRAM_API_URL}`);
+} else {
+  console.log('ℹ️ Standart Telegram API (api.telegram.org, 50MB limit)');
+}
 console.log(
-  `[diag] fayl limiti: ${config.MAX_FILE_SIZE_MB}MB` +
-    ` | Bot API: ${config.TELEGRAM_API_URL || 'rasmiy (api.telegram.org, 50MB)'}` +
-    ` | auto-downscale: ${config.AUTO_DOWNSCALE ? 'yoniq' : "o'chiq"}`
+  `[diag] fayl limiti: ${config.MAX_FILE_SIZE_MB}MB | auto-downscale: ${config.AUTO_DOWNSCALE ? 'yoniq' : "o'chiq"}`
 );
 checkBinary('yt-dlp', config.YTDLP_PATH, true);
 checkBinary('gallery-dl', config.GALLERY_DL_PATH, false);
