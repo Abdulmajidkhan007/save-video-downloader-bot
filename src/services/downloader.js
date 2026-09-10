@@ -207,24 +207,21 @@ function cleanupToken(dir, token) {
 }
 
 // Format selektorlari.
-// MUHIM: YouTube ko'p videolarda BIRLASHGAN (audio+video bitta faylda) format
-// bermaydi — faqat alohida oqimlar. Shuning uchun `best` (bitta fayl) ko'pincha
-// "Requested format is not available" beradi. Yechim: bestvideo+bestaudio ni
-// ffmpeg bilan birlashtiramiz (`bv*+ba/b`). Fayl hajmi yuklab bo'lingach
-// tekshiriladi (MAX_BYTES) — shuning uchun bu yerda filesize filtri kerak emas
-// (u ham "format not available" sababi bo'lishi mumkin).
+// MUHIM: YouTube ko'p videolarda BIRLASHGAN format bermaydi — bestvideo+bestaudio
+// ni ffmpeg bilan birlashtiramiz. Telegram MP4 (H.264/AAC) ni o'ynaydi, WebM
+// (VP9/opus) ni ko'pincha fayl sifatida ko'rsatadi — shuning uchun avc1/mp4/m4a
+// ni USTUN qo'yamiz: (1) progressive mp4, (2) avc1+m4a, (3) har qanday video+audio.
 function videoFormatFor(quality) {
-  if (quality === '360') {
-    return 'bv*[height<=360]+ba/b[height<=360]/bv*+ba/b';
+  const h = quality === '360' || quality === '480' || quality === '720' ? quality : null;
+  if (h) {
+    return (
+      `b[ext=mp4][height<=${h}]/` +
+      `bv*[height<=${h}][vcodec^=avc1]+ba[ext=m4a]/` +
+      `bv*[height<=${h}]+ba/b[height<=${h}]/bv*+ba/b`
+    );
   }
-  if (quality === '480') {
-    return 'bv*[height<=480]+ba/b[height<=480]/bv*+ba/b';
-  }
-  if (quality === '720') {
-    return 'bv*[height<=720]+ba/b[height<=720]/bv*+ba/b';
-  }
-  // boshqa platformalar: birlashgan bo'lsa o'shani, aks holda merge
-  return 'b/bv*+ba/best';
+  // boshqa platformalar: mp4 birlashgan ustun, keyin avc1+m4a, keyin har qanday
+  return 'b[ext=mp4]/bv*[vcodec^=avc1]+ba[ext=m4a]/b/bv*+ba/best';
 }
 
 // 50MB dan katta bo'lsa avtomatik pasaytirish uchun keyingi sifat.
@@ -259,7 +256,16 @@ async function downloadVideo(url, opts = {}) {
       '0'
     );
   } else {
-    args.push('-f', videoFormatFor(opts.quality || 'best'), '--merge-output-format', 'mp4');
+    // --merge-output-format: birlashtirilganda mp4; --remux-video: bitta webm
+    // bo'lsa ham mp4 konteynerga o'tkazadi (Telegram o'ynashi uchun).
+    args.push(
+      '-f',
+      videoFormatFor(opts.quality || 'best'),
+      '--merge-output-format',
+      'mp4',
+      '--remux-video',
+      'mp4'
+    );
   }
 
   // URL — oxirgi, alohida argument.
