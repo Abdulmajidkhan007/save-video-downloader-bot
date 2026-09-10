@@ -4,6 +4,20 @@
 require('dotenv').config();
 
 const path = require('path');
+const fs = require('fs');
+
+// Binary yo'lini aniqlaydi: env > bundlangan (bin/) > tizimdagi (PATH).
+// Shunда Railway'da bin/ ishlatiladi, uy qurilmasida (Termux/Kali) tizimdagi
+// yt-dlp/ffmpeg/gallery-dl avtomatik topiladi — qo'shimcha sozlashsiz.
+function resolveBinary(envVal, bundledPath, systemName) {
+  if (envVal) return envVal;
+  try {
+    if (fs.existsSync(bundledPath)) return bundledPath;
+  } catch (_) {
+    /* ignore */
+  }
+  return systemName;
+}
 
 function parseAdminIds(raw) {
   if (!raw) return [];
@@ -81,9 +95,12 @@ const config = {
   YTDLP_COOKIES: COOKIES_PATH,
   // cookies.txt ning base64 ko'rinishi (Railway Variables bir qatorli bo'lgani uchun)
   YTDLP_COOKIES_B64: process.env.YTDLP_COOKIES_B64 || '',
-  // yt-dlp binary yo'li — Railwayda standalone binary bin/yt-dlp ga yuklanadi.
-  // Fallback absolyut yo'l bo'lsin: ish papkasi (cwd) o'zgarsa ham topilaveradi.
-  YTDLP_PATH: process.env.YTDLP_PATH || path.join(__dirname, '..', 'bin', 'yt-dlp'),
+  // yt-dlp binary — env > bin/yt-dlp (Railway) > tizimdagi "yt-dlp" (uy qurilmasi).
+  YTDLP_PATH: resolveBinary(
+    process.env.YTDLP_PATH,
+    path.join(__dirname, '..', 'bin', 'yt-dlp'),
+    'yt-dlp'
+  ),
   // YouTube extractor player_client — datacenter IP'da "format not available"
   // muammosini ko'p hollarda hal qiladi. Vergul bilan bir nechta berish mumkin.
   // Bo'sh qilib butunlay o'chirish uchun YTDLP_PLAYER_CLIENT=off qo'ying.
@@ -97,12 +114,18 @@ const config = {
   // Qo'shimcha yt-dlp argumentlari (bo'sh joy bilan). Masalan PO token:
   // --extractor-args "youtube:po_token=web+XXXX"
   YTDLP_EXTRA_ARGS: process.env.YTDLP_EXTRA_ARGS || '',
-  // gallery-dl binary yo'li (rasm yuklash uchun)
-  GALLERY_DL_PATH:
-    process.env.GALLERY_DL_PATH || path.join(__dirname, '..', 'bin', 'gallery-dl'),
-  // ffmpeg binary — postinstall statik binary bin/ffmpeg ga yuklaydi.
-  // yt-dlp konvertatsiya/merge, ACRCloud audio kesish shu yo'ldan foydalanadi.
-  FFMPEG_PATH: process.env.FFMPEG_PATH || path.join(__dirname, '..', 'bin', 'ffmpeg'),
+  // gallery-dl binary — env > bin/ (Railway) > tizimdagi "gallery-dl" (uy qurilmasi)
+  GALLERY_DL_PATH: resolveBinary(
+    process.env.GALLERY_DL_PATH,
+    path.join(__dirname, '..', 'bin', 'gallery-dl'),
+    'gallery-dl'
+  ),
+  // ffmpeg binary — env > bin/ffmpeg (Railway) > tizimdagi "ffmpeg" (uy qurilmasi)
+  FFMPEG_PATH: resolveBinary(
+    process.env.FFMPEG_PATH,
+    path.join(__dirname, '..', 'bin', 'ffmpeg'),
+    'ffmpeg'
+  ),
 
   // ACRCloud (Shazam kabi musiqa aniqlash). Bo'sh bo'lsa funksiya o'chiq.
   ACR_HOST: process.env.ACR_HOST || '',
