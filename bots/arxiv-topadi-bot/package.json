@@ -1,0 +1,16 @@
+{
+  "name": "recover-guide-bot",
+  "version": "1.0.0",
+  "description": "Telegram qo'llanma-bot: guruhda o'chib ketgan xabarlarni Termux + Ubuntu + Python + Telethon orqali tiklashni bosqichma-bosqich o'rgatadi.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "0.66.0"
+  },
+  "license": "MIT"
+}

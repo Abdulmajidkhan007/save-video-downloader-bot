@@ -1,0 +1,8 @@
+node_modules/
+.env
+*.log
+npm-debug.log*
+
+# Runtime data (Railway Volume /app/data ga mount qilinadi).
+# Bundled seed fayllari seed/ papkada saqlanadi.
+data/

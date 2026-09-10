@@ -1,8 +1,30 @@
-node_modules/
+# Sirlar — HECH QACHON commit qilinmaydi (repo public)
 .env
-data/
+.env.*
+!.env.example
+
+# Bog'liqliklar
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Ish vaqtidagi ma'lumot va vaqtinchalik fayllar
+**/data/*
+!**/data/.gitkeep
 downloads/
+temp_media/
 bin/
+dist/
+build/
 *.log
 npm-debug.log*
+yarn-error.log
+*.db
+*.sqlite
+
+# OS / muharrir
 .DS_Store
+.idea/
+.vscode/

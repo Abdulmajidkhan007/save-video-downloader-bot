@@ -1,0 +1,308 @@
+{
+  "direction": "general",
+  "directionLabel": "Umumiy IT",
+  "key": "it",
+  "label": "Umumiy IT",
+  "questions": [
+    {
+      "q": "HTML nimani anglatadi?",
+      "options": [
+        "HyperText Markup Language",
+        "HighText Machine Language",
+        "Hyperloop Markup Logic",
+        "Home Tool Markup Language"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "CPU qisqartmasi nima?",
+      "options": [
+        "Central Processing Unit",
+        "Computer Personal Unit",
+        "Central Program Utility",
+        "Control Processing Unit"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "RAM qanday xotira hisoblanadi?",
+      "options": [
+        "Tezkor (o'zgaruvchan) xotira",
+        "Doimiy xotira",
+        "Tashqi xotira",
+        "Optik xotira"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Quyidagilardan qaysi biri dasturlash tili?",
+      "options": [
+        "Python",
+        "HTTP",
+        "FTP",
+        "DNS"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "IP manzil nima uchun kerak?",
+      "options": [
+        "Tarmoqdagi qurilmani aniqlash uchun",
+        "Faylni saqlash uchun",
+        "Rasm chizish uchun",
+        "Parol yaratish uchun"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Quyidagilardan qaysi biri ma'lumotlar bazasi tizimi?",
+      "options": [
+        "MySQL",
+        "Photoshop",
+        "Windows",
+        "Chrome"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "JavaScript dastlab qayerda ishlash uchun yaratilgan?",
+      "options": [
+        "Brauzerda",
+        "Printerda",
+        "Klaviaturada",
+        "Monitorlarda"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "HTTP protokoli standart holatda qaysi portdan foydalanadi?",
+      "options": [
+        "80",
+        "443",
+        "21",
+        "25"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "HTTPS qaysi portdan foydalanadi?",
+      "options": [
+        "443",
+        "80",
+        "8080",
+        "53"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Quyidagilardan qaysi biri operatsion tizim?",
+      "options": [
+        "Linux",
+        "Python",
+        "MySQL",
+        "Apache"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Dasturlashda \"bug\" nima?",
+      "options": [
+        "Dasturdagi xato",
+        "Yangi funksiya",
+        "Tezlik o'lchovi",
+        "Xotira turi"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Binar sanoq sistemasi qaysi raqamlardan iborat?",
+      "options": [
+        "0 va 1",
+        "0 dan 9 gacha",
+        "1 va 2",
+        "A va B"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "1 bayt nechta bitga teng?",
+      "options": [
+        "8",
+        "4",
+        "16",
+        "2"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "DNS qanday vazifani bajaradi?",
+      "options": [
+        "Domen nomini IP manzilga aylantiradi",
+        "Faylni siqadi",
+        "Virusni o'chiradi",
+        "Parolni shifrlaydi"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Git nima uchun ishlatiladi?",
+      "options": [
+        "Kod versiyalarini boshqarish",
+        "Rasm tahrirlash",
+        "Video montaj",
+        "Antivirus"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "CSS asosan nima uchun ishlatiladi?",
+      "options": [
+        "Veb-sahifa ko'rinishini bezash",
+        "Ma'lumotlarni saqlash",
+        "Server ishga tushirish",
+        "Virusdan himoya"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Quyidagilardan qaysi biri takrorlash (sikl) operatori?",
+      "options": [
+        "for",
+        "if",
+        "return",
+        "import"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "\"404\" HTTP status kodi nimani bildiradi?",
+      "options": [
+        "Sahifa topilmadi",
+        "Muvaffaqiyatli",
+        "Server xatosi",
+        "Ruxsat yo'q"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Kompilyator nima qiladi?",
+      "options": [
+        "Kodni mashina tiliga o'giradi",
+        "Faylni o'chiradi",
+        "Internetga ulanadi",
+        "Rasm chizadi"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "SQL qisqartmasi nima?",
+      "options": [
+        "Structured Query Language",
+        "Simple Question Language",
+        "System Quality Logic",
+        "Secure Query Link"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Phishing nima?",
+      "options": [
+        "Aldash orqali shaxsiy ma'lumot o'g'irlash",
+        "Faylni siqish usuli",
+        "Tarmoq tezligi",
+        "Dasturlash tili"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Firewall (xavfsizlik devori) nima qiladi?",
+      "options": [
+        "Tarmoq trafigini nazorat qiladi va filtrlaydi",
+        "Rasm tahrirlaydi",
+        "Xotirani tozalaydi",
+        "Fayl yaratadi"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "URL qisqartmasi nima?",
+      "options": [
+        "Uniform Resource Locator",
+        "Universal Reading Link",
+        "Unified Routing Layer",
+        "User Refresh Loader"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Ko'p dasturlash tillarida massivning birinchi elementi indeksi nechiga teng?",
+      "options": [
+        "0",
+        "1",
+        "-1",
+        "10"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "API qisqartmasi nima?",
+      "options": [
+        "Application Programming Interface",
+        "Advanced Program Internet",
+        "Automatic Process Input",
+        "Applied Public Index"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Kesh (cache) nima uchun ishlatiladi?",
+      "options": [
+        "Ma'lumotni tezroq olish uchun vaqtincha saqlash",
+        "Virus tarqatish",
+        "Ekranni o'chirish",
+        "Parol buzish"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "TCP va UDP nima?",
+      "options": [
+        "Tarmoq protokollari",
+        "Dasturlash tillari",
+        "Operatsion tizimlar",
+        "Brauzerlar"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Ochiq kodli (open-source) dastur nima?",
+      "options": [
+        "Manba kodi hammaga ochiq dastur",
+        "Faqat pullik dastur",
+        "Internetsiz ishlaydigan dastur",
+        "Virusli dastur"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Quyidagilardan qaysi biri veb-server hisoblanadi?",
+      "options": [
+        "Apache",
+        "Python",
+        "MySQL",
+        "Linux"
+      ],
+      "correct": 0
+    },
+    {
+      "q": "RAM va ROM o'rtasidagi asosiy farq nima?",
+      "options": [
+        "RAM o'zgaruvchan, ROM doimiy",
+        "Ikkalasi ham bir xil",
+        "ROM tezroq ishlaydi",
+        "RAM tashqi xotira"
+      ],
+      "correct": 0
+    }
+  ]
+}

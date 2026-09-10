@@ -1,0 +1,24 @@
+{
+  "name": "telegram-expense-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "bot": "yarn workspace @expense-tracker/bot dev",
+    "api": "yarn workspace @expense-tracker/api dev",
+    "web": "yarn workspace @expense-tracker/web dev",
+    "build:all": "yarn workspaces run build",
+    "db:generate": "yarn workspace @expense-tracker/database generate",
+    "db:migrate": "yarn workspace @expense-tracker/database migrate",
+    "db:studio": "yarn workspace @expense-tracker/database studio"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

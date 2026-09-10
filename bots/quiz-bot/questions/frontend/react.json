@@ -1,0 +1,16 @@
+{
+  "direction": "frontend",
+  "directionLabel": "Frontend",
+  "key": "react",
+  "label": "React",
+  "questions": [
+    { "q": "React komponentlari odatda qaysi sintaksisda yoziladi?", "options": ["JSX", "XML", "YAML", "HTML5"], "correct": 0 },
+    { "q": "Komponent ichida holatni (state) boshqarish uchun qaysi Hook?", "options": ["useState", "useEffect", "useRef", "useState yo'q"], "correct": 0 },
+    { "q": "Yon ta'sirlar (side effects, masalan API chaqiruvi) uchun qaysi Hook?", "options": ["useEffect", "useState", "useMemo", "useContext"], "correct": 0 },
+    { "q": "Ro'yxat (list) render qilganda har bir elementga nima berish kerak?", "options": ["key prop", "id className", "ref", "style"], "correct": 0 },
+    { "q": "Props nima?", "options": ["Komponentga uzatiladigan ma'lumot", "Komponent ichki holati", "CSS fayl", "Server javobi"], "correct": 0 },
+    { "q": "JSX ichida JavaScript ifodasini qanday yozamiz?", "options": ["{ifoda}", "${ifoda}", "<%ifoda%>", "[ifoda]"], "correct": 0 },
+    { "q": "React komponenti nomi qanday harf bilan boshlanishi kerak?", "options": ["Katta harf", "Kichik harf", "Raqam", "Pastki chiziq"], "correct": 0 },
+    { "q": "Virtual DOM nima?", "options": ["DOM'ning xotiradagi yengil nusxasi", "Yangi brauzer", "Server texnologiyasi", "CSS kutubxonasi"], "correct": 0 }
+  ]
+}
