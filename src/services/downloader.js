@@ -77,9 +77,11 @@ function commonArgs() {
     '--no-progress',
     '--restrict-filenames',
   ];
-  // ffmpeg'ni aniq ko'rsatamiz — konvertatsiya/merge bin/ffmpeg orqali ishlaydi
-  // (nixpacks runtime PATH'ida ffmpeg bo'lmasligi mumkin).
-  if (config.FFMPEG_PATH) {
+  // ffmpeg joyi FAQAT haqiqiy yo'l (/ bor va mavjud) bo'lsa uzatiladi — masalan
+  // Railway'dagi bin/ffmpeg. Yalang nom (ffmpeg) bo'lsa uzatilmaydi: yt-dlp
+  // --ffmpeg-location'ni PATH'dan qidirmaydi (yo'l deb kutadi), shuning uchun
+  // uni tashlab qo'ysak yt-dlp ffmpeg/ffprobe'ni PATH'dan o'zi topadi.
+  if (config.FFMPEG_PATH && config.FFMPEG_PATH.includes('/') && fs.existsSync(config.FFMPEG_PATH)) {
     args.push('--ffmpeg-location', config.FFMPEG_PATH);
   }
   // YouTube player_client — "Requested format is not available" muammosini
