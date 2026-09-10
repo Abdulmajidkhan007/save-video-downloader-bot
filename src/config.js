@@ -22,11 +22,9 @@ const DOWNLOADS_DIR = process.env.DOWNLOADS_DIR
   ? path.resolve(process.env.DOWNLOADS_DIR)
   : path.resolve(process.cwd(), 'downloads');
 
-// Cookies fayli DATA_DIR ichida saqlanadi. YTDLP_COOKIES env orqali qo'lda
-// yo'l berilsa — o'sha ustun turadi, aks holda DATA_DIR/cookies.txt.
-const COOKIES_PATH = process.env.YTDLP_COOKIES
-  ? path.resolve(process.env.YTDLP_COOKIES)
-  : path.join(DATA_DIR, 'cookies.txt');
+// Cookies fayli DOIM DATA_DIR/cookies.txt. Faqat YTDLP_COOKIES_B64 env'idan
+// dekod qilinib shu faylga yoziladi (chalkashlik bo'lmasligi uchun bitta manba).
+const COOKIES_PATH = path.join(DATA_DIR, 'cookies.txt');
 
 // Boshlang'ich majburiy obuna kanallari (vergul bilan: @kanal1,@kanal2).
 // Faqat channels.json bo'sh/yo'q bo'lsa seed qilinadi.
@@ -59,6 +57,16 @@ function parseSourceChannels(raw) {
   return { ids, usernames, list };
 }
 
+// Local Bot API bo'lsa limit avtomatik 2000MB, aks holda 50MB.
+// MAX_FILE_SIZE_MB env berilsa — o'sha ustun turadi.
+const TELEGRAM_API_URL = process.env.TELEGRAM_API_URL || '';
+const MAX_FILE_SIZE_MB =
+  Number(process.env.MAX_FILE_SIZE_MB) > 0
+    ? Number(process.env.MAX_FILE_SIZE_MB)
+    : TELEGRAM_API_URL
+      ? 2000
+      : 50;
+
 const config = {
   BOT_TOKEN: process.env.BOT_TOKEN || '',
   ADMIN_IDS: parseAdminIds(process.env.ADMIN_IDS),
@@ -69,7 +77,7 @@ const config = {
   FORWARD_MODE: process.env.FORWARD_MODE === 'forward' ? 'forward' : 'copy',
   DATA_DIR,
   DOWNLOADS_DIR,
-  // cookies.txt yo'li (YouTube "bot emasligini tasdiqlang" xatosi uchun)
+  // cookies.txt yo'li (DOIM DATA_DIR/cookies.txt — YTDLP_COOKIES_B64 dan yoziladi)
   YTDLP_COOKIES: COOKIES_PATH,
   // cookies.txt ning base64 ko'rinishi (Railway Variables bir qatorli bo'lgani uchun)
   YTDLP_COOKIES_B64: process.env.YTDLP_COOKIES_B64 || '',
@@ -103,16 +111,11 @@ const config = {
 
   // Local Bot API Server manzili (baseApiUrl). Bo'sh bo'lsa — rasmiy
   // api.telegram.org (50MB limit). Local server bilan 2GB gacha yuborish mumkin.
-  TELEGRAM_API_URL: process.env.TELEGRAM_API_URL || '',
-  // Fayl yuborish limiti (MB). Rasmiy Bot API — 50; Local Bot API — 2000 gacha.
-  // Local server ishlatsangiz env'da MAX_FILE_SIZE_MB=2000 qiling.
-  MAX_FILE_SIZE_MB: Number(process.env.MAX_FILE_SIZE_MB) > 0
-    ? Number(process.env.MAX_FILE_SIZE_MB)
-    : 50,
-  MAX_FILE_SIZE_BYTES:
-    (Number(process.env.MAX_FILE_SIZE_MB) > 0 ? Number(process.env.MAX_FILE_SIZE_MB) : 50) *
-    1024 *
-    1024,
+  TELEGRAM_API_URL,
+  // Fayl yuborish limiti (MB). Avtomatik: Local API bo'lsa 2000, aks holda 50.
+  // MAX_FILE_SIZE_MB env berilsa — o'sha ustun turadi.
+  MAX_FILE_SIZE_MB,
+  MAX_FILE_SIZE_BYTES: MAX_FILE_SIZE_MB * 1024 * 1024,
   // Katta videoni avtomatik sifat pasaytirish (720→480→360). Local API bilan
   // 2GB limit bo'lgani uchun odatda kerak emas — o'chirish: AUTO_DOWNSCALE=off.
   AUTO_DOWNSCALE: process.env.AUTO_DOWNSCALE !== 'off',
