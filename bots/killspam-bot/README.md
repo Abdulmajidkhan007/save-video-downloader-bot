@@ -117,3 +117,7 @@ Python 3.11 · [aiogram 3](https://docs.aiogram.dev/) · SQLAlchemy 2 + PostgreS
 ## 🙌 Mualliflar
 
 **[@ertagakech](https://t.me/ertagakech)** Telegram kanali uchun yaratilgan. Sun’iy intellekt haqida ko‘proq bilish uchun qo‘shiling 👉 **https://t.me/ertagakech**
+
+---
+
+**Muallif:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)

@@ -64,3 +64,7 @@ pip install -r requirements.txt
 # Va ishga tushiring:
 python3 main.py
 ```
+
+---
+
+**Muallif:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)

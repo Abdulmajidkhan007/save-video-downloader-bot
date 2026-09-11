@@ -203,3 +203,7 @@ IT yo'nalishlari bo'yicha taymerli test boti. Yakka va guruh testlari, reyting, 
 - **Saqlash:** JSON fayllar (`data/` papkasida)
 - **Quiz mexanizmi:** Telegram'ning `sendPoll` (type: 'quiz') — bot tomonidan ball hisoblanmaydi, Telegram poll natijasi ishlatiladi
 - **Rejalashtirilgan testlar:** Node.js `setTimeout` (jarayon o'lsa — yo'qoladi)
+
+---
+
+**Muallif:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)

@@ -98,3 +98,7 @@ ta'minlaydi. Volume yoki port sozlash **kerak emas**.
 ## Litsenziya
 
 MIT
+
+---
+
+**Muallif:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)

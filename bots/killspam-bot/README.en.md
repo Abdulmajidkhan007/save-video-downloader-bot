@@ -117,3 +117,7 @@ Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE). You may use,
 ## 🙌 Credits
 
 Created for the **[@ertagakech](https://t.me/ertagakech)** Telegram channel. Join to learn more about AI 👉 **https://t.me/ertagakech**
+
+---
+
+**Author:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)

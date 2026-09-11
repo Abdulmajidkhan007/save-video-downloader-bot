@@ -82,3 +82,7 @@ src/handlers.js     — buyruq va savol oqimi (testlanadigan)
 src/bot.js          — Telegram hodisalarini ulash
 test/smoke.test.js  — smoke testlar
 ```
+
+---
+
+**Muallif:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)

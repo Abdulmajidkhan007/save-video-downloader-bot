@@ -205,3 +205,7 @@ Shunda Railway faqat o'sha papkani quradi va uning `package.json` idagi
 Root va aksar botlar — MIT. **`bots/killspam-bot`** o'zining
 [PolyForm Noncommercial 1.0.0](bots/killspam-bot/LICENSE) litsenziyasi ostida —
 o'sha papka uchun shu litsenziya amal qiladi.
+
+---
+
+**Muallif:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)

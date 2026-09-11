@@ -94,3 +94,7 @@ Birinchi ishga tushganda `seed/` dagi fayllar `DATA_DIR` ga ko'chiriladi (agar m
 2. **Qidiruv** — ID, @username, kontakt ulashish (3 usul).
 3. **ID olish** — kanal tanlash, group tanlash, user tanlash, forward (3+1 usul).
 4. **Admin** — statistika, kanal qo'shish/o'chirish, broadcast, foydalanuvchilar.
+
+---
+
+**Muallif:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)
