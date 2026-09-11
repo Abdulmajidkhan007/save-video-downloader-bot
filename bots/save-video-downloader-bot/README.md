@@ -216,3 +216,7 @@ Kod buni **qo'llab-quvvatlaydi** (`TELEGRAM_API_URL` + `MAX_FILE_SIZE_MB`). Yoqi
 
 > Local API'siz: `AUTO_DOWNSCALE=on` (default) — 50MB'dan katta video avtomatik
 > 720→480→360p ga pasaytiriladi, toki limitiga sig'guncha.
+
+---
+
+**Muallif:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)

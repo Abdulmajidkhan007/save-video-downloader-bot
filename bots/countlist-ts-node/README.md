@@ -692,3 +692,7 @@ MIT License
 ---
 
 **Made with ❤️ in Uzbekistan 🇺🇿**
+
+---
+
+**Muallif:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)

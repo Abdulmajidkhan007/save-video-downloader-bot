@@ -97,3 +97,7 @@ parolsiz kiradi. Shuning uchun:
 - Kartochka shabloni va valyuta kursi ham o'sha fayldagi `SYSTEM_PROMPT` da —
   narx o'zgarsa shu yerdan tahrirlang.
 - Telegram limitiga urilmaslik uchun har post orasida 4 soniya kutiladi.
+
+---
+
+**Muallif:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)

@@ -117,3 +117,7 @@ Python 3.11 · [aiogram 3](https://docs.aiogram.dev/) · SQLAlchemy 2 + PostgreS
 ## 🙌 Благодарности
 
 Создано для Telegram-канала **[@ertagakech](https://t.me/ertagakech)**. Подписывайтесь, чтобы узнать больше об ИИ 👉 **https://t.me/ertagakech**
+
+---
+
+**Автор:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)

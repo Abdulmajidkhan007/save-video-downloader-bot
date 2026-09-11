@@ -37,6 +37,15 @@ test('har bir bot papkasida .env.example bor va .env yo\'q', () => {
   }
 });
 
+test('har bir bot papkasida README bor va muallif ko\'rsatilgan', () => {
+  for (const b of realRegistry.bots) {
+    const readme = path.join(__dirname, '..', 'bots', b.id, 'README.md');
+    assert.ok(fs.existsSync(readme), `${b.id}: README.md yo'q`);
+    const text = fs.readFileSync(readme, 'utf8');
+    assert.ok(text.includes('@Abdulloh_77700'), `${b.id}: README da muallif ko'rsatilmagan`);
+  }
+});
+
 test('validateRegistry: takrorlangan id ni rad etadi', () => {
   assert.throws(() => validateRegistry({ bots: [bot(), bot()] }), /takrorlangan/);
 });

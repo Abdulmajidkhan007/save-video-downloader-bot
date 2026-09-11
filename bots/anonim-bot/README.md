@@ -167,3 +167,7 @@ Tekshiriladi: referral oqimi, reply quote, bloklash, rate limit, shikoyat, banla
 ## 📝 Litsenziya
 
 MIT
+
+---
+
+**Muallif:** [@Abdulloh_77700](https://t.me/Abdulloh_77700)
