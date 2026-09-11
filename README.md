@@ -38,7 +38,7 @@ git clone https://github.com/Abdulmajidkhan007/save-video-downloader-bot.git
 cd save-video-downloader-bot
 ```
 
-Bitta buyruq — **hamma 10 ta bot** yuklab olinadi.
+Bitta buyruq — **hamma 11 ta bot** yuklab olinadi.
 
 ### 2. Botlar ro'yxatini ko'rish
 
@@ -178,6 +178,7 @@ Hech qanday root faylga bog'liqlik yo'q.
 - **Python ≥ 3.11** — `killspam-bot`, `xulosa-ai-bot`, `atoyo-ai-bot` uchun
 - **yt-dlp + ffmpeg** — faqat `save-video-downloader-bot` uchun
 - **PostgreSQL / Redis** — faqat `killspam-bot` va `countlist-ts-node` uchun
+- **Telegram API_ID/API_HASH** (userbot) — `xulosa-ai-bot`, `atoyo-ai-bot` uchun
 
 Boshqaruvchi CLI (`tools/run.js`) **hech qanday tashqi kutubxonaga bog'liq emas** —
 toza Node bilan ishlaydi, root'da `npm install` qilish shart emas.
