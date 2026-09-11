@@ -1,0 +1,16 @@
+# Telethon sessiya fayllari — AKKAUNTGA TO'LIQ KIRISH HUQUQI BERADI, hech qachon commit qilinmaydi
+*.session
+*.session-journal
+
+# Sirlar
+.env
+
+# Ish vaqtidagi holat
+processed_ids.txt
+temp_media/
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc

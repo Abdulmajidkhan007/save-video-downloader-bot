@@ -30,14 +30,18 @@ tools/registry.test.js testlar
 docs/ARXITEKTURA-TARIXI.md  qarorlar tarixi
 ```
 
-**10 ta bot:** `save-video-downloader-bot`, `anonim-bot`, `arxiv-topadi-bot`,
+**11 ta bot:** `save-video-downloader-bot`, `anonim-bot`, `arxiv-topadi-bot`,
 `gemini-qa-bot`, `idfinder-bot`, `malware-bot`, `quiz-bot` (Node) ·
-`killspam-bot`, `xulosa-ai-bot` (Python) · `countlist-ts-node` (TypeScript monorepo).
+`killspam-bot`, `xulosa-ai-bot`, `atoyo-ai-bot` (Python) ·
+`countlist-ts-node` (TypeScript monorepo).
 
 ---
 
 ## 🔒 Xavfsizlik (repo PUBLIC)
 
+- **Telethon `*.session` fayllari — kalitdan ham xavfliroq** (akkauntga to'liq
+  kirish). Hech qachon repoga tushmaydi; har userbot papkasida `.gitignore`
+  ularni bloklaydi.
 - **`.env` hech qachon commit qilinmaydi.** Faqat `.env.example` — bo'sh yoki
   namuna qiymatlar bilan (`BU_YERGA_YOZING`, `your_key_here`).
 - Kalit, token, parol — **faqat env orqali**. Kodga yozilmaydi, log'ga chiqarilmaydi.

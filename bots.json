@@ -7,9 +7,23 @@
       "desc": "YouTube/Instagram/TikTok va boshqalardan video va MP3 yuklovchi bot (yt-dlp + ffmpeg).",
       "runtime": "node",
       "autoStart": true,
-      "install": [["npm", "install"]],
-      "start": [["node", "src/bot.js"]],
-      "requires": ["yt-dlp", "ffmpeg", "gallery-dl (ixtiyoriy)"]
+      "install": [
+        [
+          "npm",
+          "install"
+        ]
+      ],
+      "start": [
+        [
+          "node",
+          "src/bot.js"
+        ]
+      ],
+      "requires": [
+        "yt-dlp",
+        "ffmpeg",
+        "gallery-dl (ixtiyoriy)"
+      ]
     },
     {
       "id": "anonim-bot",
@@ -17,8 +31,18 @@
       "desc": "Referral havolali anonim savol-javob boti: ikki tomonlama suhbat, bloklash, shikoyat, admin panel.",
       "runtime": "node",
       "autoStart": true,
-      "install": [["npm", "install"]],
-      "start": [["node", "index.js"]],
+      "install": [
+        [
+          "npm",
+          "install"
+        ]
+      ],
+      "start": [
+        [
+          "node",
+          "index.js"
+        ]
+      ],
       "requires": []
     },
     {
@@ -27,8 +51,18 @@
       "desc": "O'chib ketgan Telegram xabarlarni Termux+Telethon orqali tiklashni bosqichma-bosqich o'rgatuvchi qo'llanma-bot.",
       "runtime": "node",
       "autoStart": true,
-      "install": [["npm", "install"]],
-      "start": [["node", "src/index.js"]],
+      "install": [
+        [
+          "npm",
+          "install"
+        ]
+      ],
+      "start": [
+        [
+          "node",
+          "src/index.js"
+        ]
+      ],
       "requires": []
     },
     {
@@ -37,9 +71,21 @@
       "desc": "Google Gemini API asosidagi savol-javob boti: suhbat konteksti, rate limit, /reset.",
       "runtime": "node",
       "autoStart": true,
-      "install": [["npm", "install"]],
-      "start": [["node", "index.js"]],
-      "requires": ["Gemini API kaliti"]
+      "install": [
+        [
+          "npm",
+          "install"
+        ]
+      ],
+      "start": [
+        [
+          "node",
+          "index.js"
+        ]
+      ],
+      "requires": [
+        "Gemini API kaliti"
+      ]
     },
     {
       "id": "idfinder-bot",
@@ -47,8 +93,18 @@
       "desc": "Foydalanuvchi, kanal va guruh ID larini topuvchi bot (majburiy obuna bilan).",
       "runtime": "node",
       "autoStart": true,
-      "install": [["npm", "install"]],
-      "start": [["node", "src/bot.js"]],
+      "install": [
+        [
+          "npm",
+          "install"
+        ]
+      ],
+      "start": [
+        [
+          "node",
+          "src/bot.js"
+        ]
+      ],
       "requires": []
     },
     {
@@ -57,9 +113,21 @@
       "desc": "Havola va fayllarni VirusTotal orqali zararli dasturga tekshiruvchi bot.",
       "runtime": "node",
       "autoStart": true,
-      "install": [["npm", "install"]],
-      "start": [["node", "index.js"]],
-      "requires": ["VirusTotal API kaliti"]
+      "install": [
+        [
+          "npm",
+          "install"
+        ]
+      ],
+      "start": [
+        [
+          "node",
+          "index.js"
+        ]
+      ],
+      "requires": [
+        "VirusTotal API kaliti"
+      ]
     },
     {
       "id": "quiz-bot",
@@ -67,8 +135,18 @@
       "desc": "IT yo'nalishlari bo'yicha test boti: yakka va guruh testlari, taymer, reyting.",
       "runtime": "node",
       "autoStart": true,
-      "install": [["npm", "install"]],
-      "start": [["node", "index.js"]],
+      "install": [
+        [
+          "npm",
+          "install"
+        ]
+      ],
+      "start": [
+        [
+          "node",
+          "index.js"
+        ]
+      ],
       "requires": []
     },
     {
@@ -77,9 +155,28 @@
       "desc": "Guruhlarni spam, behayo kontent va zararli APK havolalaridan tozalovchi bot (Python).",
       "runtime": "python",
       "autoStart": false,
-      "install": [["pip", "install", "-r", "requirements.txt"]],
-      "start": [["python", "init_db.py"], ["python", "-m", "spam_bot.main"]],
-      "requires": ["PostgreSQL (DATABASE_URL)"],
+      "install": [
+        [
+          "pip",
+          "install",
+          "-r",
+          "requirements.txt"
+        ]
+      ],
+      "start": [
+        [
+          "python",
+          "init_db.py"
+        ],
+        [
+          "python",
+          "-m",
+          "spam_bot.main"
+        ]
+      ],
+      "requires": [
+        "PostgreSQL (DATABASE_URL)"
+      ],
       "note": "Baza kerak — shuning uchun `start all` da o'tkazib yuboriladi. Alohida ishga tushiring."
     },
     {
@@ -88,9 +185,25 @@
       "desc": "Guruh/kanal yozishmalarini Gemini AI bilan xulosalovchi bot (Telethon, Python).",
       "runtime": "python",
       "autoStart": false,
-      "install": [["pip", "install", "-r", "requirements.txt"]],
-      "start": [["python", "main.py"]],
-      "requires": ["Telegram API_ID/API_HASH", "STRING_SESSION", "Gemini API kaliti"],
+      "install": [
+        [
+          "pip",
+          "install",
+          "-r",
+          "requirements.txt"
+        ]
+      ],
+      "start": [
+        [
+          "python",
+          "main.py"
+        ]
+      ],
+      "requires": [
+        "Telegram API_ID/API_HASH",
+        "STRING_SESSION",
+        "Gemini API kaliti"
+      ],
       "note": "Userbot sessiyasi (STRING_SESSION) kerak — `start all` da o'tkazib yuboriladi."
     },
     {
@@ -99,10 +212,52 @@
       "desc": "Guruh xarajatlarini hisoblovchi TypeScript monorepo: Telegram bot, NestJS API, React dashboard.",
       "runtime": "node",
       "autoStart": false,
-      "install": [["npm", "install"]],
-      "start": [["npm", "run", "bot"]],
-      "requires": ["PostgreSQL", "Redis", "yarn (workspaces)"],
+      "install": [
+        [
+          "npm",
+          "install"
+        ]
+      ],
+      "start": [
+        [
+          "npm",
+          "run",
+          "bot"
+        ]
+      ],
+      "requires": [
+        "PostgreSQL",
+        "Redis",
+        "yarn (workspaces)"
+      ],
       "note": "Ichki monorepo (yarn workspaces) + PostgreSQL/Redis kerak. Alohida README ga qarang."
+    },
+    {
+      "id": "atoyo-ai-bot",
+      "name": "Atoyo AI Katalog Userbot",
+      "desc": "Mahsulot rasmlarini Gemini bilan tahlil qilib katalog kartochkasi yasaydi va topicga joylaydi (Telethon userbot).",
+      "runtime": "python",
+      "autoStart": false,
+      "install": [
+        [
+          "pip",
+          "install",
+          "-r",
+          "requirements.txt"
+        ]
+      ],
+      "start": [
+        [
+          "python",
+          "main.py"
+        ]
+      ],
+      "requires": [
+        "Telegram API_ID/API_HASH",
+        "Gemini API kaliti",
+        "*.session (birinchi ishga tushirishda yaratiladi)"
+      ],
+      "note": "Userbot — birinchi ishga tushirishda telefon raqami va kod so'raladi, shuning uchun `start all` da o'tkazib yuboriladi."
     }
   ]
 }
