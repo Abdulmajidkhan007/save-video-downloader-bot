@@ -1,6 +1,6 @@
 # 🤖 Telegram Bots Monorepo
 
-**10 ta mustaqil Telegram bot — bitta repoda.** Har bot `bots/<nom>/` papkasida to'liq
+**11 ta mustaqil Telegram bot — bitta repoda.** Har bot `bots/<nom>/` papkasida to'liq
 alohida loyiha: o'z kodi, o'z `package.json`/`requirements.txt`, o'z `.env.example`,
 o'z `README.md`. Papkani nusxalab olsangiz — bot mustaqil ishlaydi.
 
@@ -23,6 +23,7 @@ o'z `README.md`. Papkani nusxalab olsangiz — bot mustaqil ishlaydi.
 | 8 | [`killspam-bot`](bots/killspam-bot) | Python | Guruhlarni **spam** va zararli havolalardan tozalaydi (PostgreSQL kerak) |
 | 9 | [`xulosa-ai-bot`](bots/xulosa-ai-bot) | Python | Guruh/kanal yozishmalarini **Gemini AI** bilan xulosalaydi (Telethon userbot) |
 | 10 | [`countlist-ts-node`](bots/countlist-ts-node) | TypeScript | Guruh **xarajatlarini hisoblovchi** bot + NestJS API + React dashboard |
+| 11 | [`atoyo-ai-bot`](bots/atoyo-ai-bot) | Python | Mahsulot rasmlarini **Gemini** bilan tahlil qilib katalog kartochkasi yasaydi (Telethon **userbot**) |
 
 Batafsil ma'lumot — har bot papkasidagi `README.md` da.
 
@@ -110,7 +111,8 @@ npm run check     # testlar + kalit tekshiruvi
 
 > **Eslatma:** `npm start` faqat `bots.json` da `autoStart: true` bo'lgan botlarni
 > ishga tushiradi. `killspam-bot`, `xulosa-ai-bot` va `countlist-ts-node` qo'shimcha
-> xizmat (PostgreSQL, Redis, userbot sessiyasi) talab qilgani uchun ular ro'yxatda
+> xizmat (PostgreSQL, Redis, userbot sessiyasi) talab qiladi. `atoyo-ai-bot` ham
+> shunday — birinchi ishga tushirishda telefon raqami so'raladi. Ular ro'yxatda
 > `[qo'lda]` deb belgilangan — alohida ishga tushiring.
 
 ---
@@ -124,7 +126,7 @@ npm run check     # testlar + kalit tekshiruvi
 │   │   ├── src/  package.json  .env.example  README.md
 │   ├── anonim-bot/
 │   ├── quiz-bot/
-│   └── ...                     # jami 10 ta
+│   └── ...                     # jami 11 ta
 ├── tools/
 │   ├── run.js                  # boshqaruvchi CLI (list/setup/install/start/doctor)
 │   ├── registry.js             # bots.json ustidagi toza mantiq
@@ -173,7 +175,7 @@ Hech qanday root faylga bog'liqlik yo'q.
 ## ⚙️ Talablar
 
 - **Node.js ≥ 18** — Node botlari va boshqaruvchi CLI uchun
-- **Python ≥ 3.11** — `killspam-bot`, `xulosa-ai-bot` uchun
+- **Python ≥ 3.11** — `killspam-bot`, `xulosa-ai-bot`, `atoyo-ai-bot` uchun
 - **yt-dlp + ffmpeg** — faqat `save-video-downloader-bot` uchun
 - **PostgreSQL / Redis** — faqat `killspam-bot` va `countlist-ts-node` uchun
 

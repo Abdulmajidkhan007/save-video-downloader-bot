@@ -7,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 
 const { validateRegistry, resolveTargets, padWidth } = require('./registry');
-const { findFilledEnvSecrets } = require('./scan-secrets');
+const { findFilledEnvSecrets, FORBIDDEN_NAME } = require('./scan-secrets');
 
 const realRegistry = JSON.parse(
   fs.readFileSync(path.join(__dirname, '..', 'bots.json'), 'utf8')
@@ -105,4 +105,16 @@ test('scan: bo\'sh va namuna qiymatlarni xavf deb hisoblamaydi', () => {
 test('scan: sir bo\'lmagan o\'zgaruvchilarga tegmaydi', () => {
   const text = 'DATA_DIR=/var/lib/some/very/long/path\nLOG_LEVEL=debugverbose';
   assert.deepStrictEqual(findFilledEnvSecrets(text), []);
+});
+
+test('scan: sessiya va kalit fayl nomlarini taqiqlaydi', () => {
+  for (const name of ['atoyo_admin_session.session', 'a.session-journal', 'id_rsa', 'cert.pem', 'store.p12']) {
+    assert.ok(FORBIDDEN_NAME.test(name), `${name} taqiqlanishi kerak edi`);
+  }
+});
+
+test('scan: oddiy fayl nomlariga tegmaydi', () => {
+  for (const name of ['main.py', 'session_helper.py', 'README.md', 'package.json']) {
+    assert.ok(!FORBIDDEN_NAME.test(name), `${name} taqiqlanmasligi kerak edi`);
+  }
 });

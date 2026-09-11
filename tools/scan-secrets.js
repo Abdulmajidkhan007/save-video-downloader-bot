@@ -34,6 +34,10 @@ const SHAPE_RULES = [
   { name: 'Private key bloki', re: /-----BEGIN (RSA |EC |OPENSSH |PGP )?PRIVATE KEY-----/g },
 ];
 
+// Fayl nomi bo'yicha taqiqlanganlar. Telethon/Pyrogram sessiya fayli kalitdan ham
+// xavfliroq: u akkauntga to'liq kirish beradi (parol ham, 2FA ham so'ralmaydi).
+const FORBIDDEN_NAME = /\.(session|session-journal)$|^id_(rsa|dsa|ecdsa|ed25519)$|\.pem$|\.p12$/;
+
 // Faqat .env* fayllari uchun: sir nomli o'zgaruvchi TO'LDIRILGAN bo'lsa — xavfli.
 const SECRET_NAME = /(TOKEN|SECRET|PASSWORD|API_KEY|APIKEY|ACCESS_KEY|SESSION|API_HASH)/;
 
@@ -86,6 +90,11 @@ function scan() {
       findings.push({ file: rel, line: 0, rule: '.env fayli', snippet: base });
     }
 
+    // 2) Sessiya / kalit fayllari — mazmunidan qat'i nazar taqiqlanadi
+    if (FORBIDDEN_NAME.test(base)) {
+      findings.push({ file: rel, line: 0, rule: 'Sessiya/kalit fayli', snippet: base });
+    }
+
     let text;
     try {
       text = fs.readFileSync(file, 'utf8');
@@ -95,7 +104,7 @@ function scan() {
     }
     if (text.indexOf(NUL) !== -1) continue; // binar fayl
 
-    // 2) Kalit shakllari — har qanday faylda
+    // 3) Kalit shakllari — har qanday faylda
     for (const rule of SHAPE_RULES) {
       rule.re.lastIndex = 0;
       let m;
@@ -112,7 +121,7 @@ function scan() {
       }
     }
 
-    // 3) .env* fayllarida to'ldirilgan sirlar
+    // 4) .env* fayllarida to'ldirilgan sirlar
     if (base.startsWith('.env')) {
       for (const hit of findFilledEnvSecrets(text)) {
         findings.push({ file: rel, line: hit.line, rule: "To'ldirilgan sir", snippet: hit.key });
@@ -137,4 +146,4 @@ if (require.main === module) {
   process.exit(1);
 }
 
-module.exports = { findFilledEnvSecrets, scan };
+module.exports = { findFilledEnvSecrets, scan, FORBIDDEN_NAME };
