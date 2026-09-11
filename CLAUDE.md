@@ -6,6 +6,14 @@
 
 ---
 
+## 🚧 Amaldagi cheklov (2026-09-11 → 2026-12-11)
+
+**Yangi loyiha boshlanmaydi.** Boshlanganlari tugatiladi — navbat va
+«tugallandi» ta'rifi [`docs/REJA.md`](docs/REJA.md) da. Yangi g'oya kelsa
+o'sha fayldagi «G'oyalar qutisi» ga yoziladi, repo ochilmaydi.
+
+---
+
 ## 🥇 Ikkita oltin qoida
 
 1. **Taxmin qilma — o'lchab ko'r.** «Ehtimol shundandir» degan gap yechim emas.
@@ -28,6 +36,7 @@ tools/registry.js   bots.json ustidagi TOZA mantiq (I/O yo'q → test qilinadi)
 tools/scan-secrets.js  kalit tekshiruvi (repo public!)
 tools/registry.test.js testlar
 docs/ARXITEKTURA-TARIXI.md  qarorlar tarixi
+docs/REJA.md        3 oylik reja: navbat, «tugallandi» ta'rifi, arxivlash ro'yxati
 ```
 
 **11 ta bot:** `save-video-downloader-bot`, `anonim-bot`, `arxiv-topadi-bot`,
